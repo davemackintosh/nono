@@ -1,0 +1,10 @@
+// Layout for content/posts/*.md in the torture example. Now that every .md is
+// also a target HTML file, these need somewhere to land; this is it. The body
+// fills Slot(); the param `date` is exercised as an attribute value.
+component PostLayout(title: string, date: string) {
+  article(class = "post") {
+    h1 { "{title}" }
+    time(datetime = date) { "{date}" }
+    Slot()
+  }
+}

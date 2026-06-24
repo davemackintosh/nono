@@ -1,0 +1,47 @@
+// Torture page. Each construct here is chosen to stress a specific part of
+// the evaluator. If any of these silently misbehaves, the design has a hole.
+
+const posts = glob("content/posts/*.md")
+
+// Edge and SelfSlot are helpers; they live in lib/components.nono because a
+// page file is allowed exactly one component (see build.rs if you doubt it).
+component TorturePage {
+  main {
+    // 1. nested for over a glob, with deep field access in interpolation
+    for post in posts {
+      div {
+        "{post.title} at {post.path}"
+      }
+    }
+
+    // 2. if / else if / else chain
+    for post in posts {
+      if post.kind == "Note" {
+        span { "note" }
+      } else {
+        span { "not a note" }
+      }
+    }
+
+    // 3. escapes and literal braces in strings
+    p { "literal brace: \{ and quote: \" and backslash: \\" }
+
+    // 4. interpolation adjacent to literals with no spaces
+    Edge(n = "x")
+
+    // 5. match with a wildcard arm and a binding arm
+    for post in posts {
+      match post.kind {
+        Note => span { "a note" }
+        _ => span { "something else" }
+      }
+    }
+
+    // 6. arithmetic and comparison in interpolation context
+    p { "math: {1 + 2 * 3}" }
+
+    // 7. an empty default slot fill (Edge has no slot, so this is fine);
+    //    a component WITH a slot but given no children:
+    SelfSlot()
+  }
+}

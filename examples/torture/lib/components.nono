@@ -1,0 +1,14 @@
+// Helper components for the torture page. These live outside pages/ on purpose:
+// a page is exactly one component, but a helpers file is under no such oath and
+// can define as many as it likes.
+
+component Edge(n: string) {
+  // param used in interpolation AND as attribute
+  div(id = n) { "n is {n}" }
+}
+
+component SelfSlot {
+  div(class = "wrap") {
+    Slot(or = nil)
+  }
+}

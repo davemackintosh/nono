@@ -1,0 +1,27 @@
+// The index page. Exercises: data sources, named + default slots,
+// for-loops over both a network source and a glob, match on post.kind,
+// and string interpolation.
+
+const recent_tracks = lastfm.recent(user = "dave", limit = 10)
+const posts = glob("content/posts/*.md")
+
+component IndexPage {
+  Layout(heading = "New World Code") {
+    sidebar = {
+      Heading(2) { "Listening to" }
+      for track in recent_tracks {
+        Prose { "{track.artist} — {track.name}" }
+      }
+    }
+
+    // default block: the posts list
+    for post in posts {
+      match post.kind {
+        Note => Prose { "{post.title}" }
+        Essay => Post(title = post.title, date = post.date) {
+          Prose { "{post.title}" }
+        }
+      }
+    }
+  }
+}

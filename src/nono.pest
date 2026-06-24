@@ -1,0 +1,114 @@
+// nono.pest — the entire Nono language grammar.
+// No, no, I'll do it myself.
+
+WHITESPACE = _{ " " | "\t" | "\r" | "\n" }
+COMMENT    = _{ "//" ~ (!"\n" ~ ANY)* }
+
+// ---- top level ----
+// A file is a sequence of top-level items.
+file = { SOI ~ item* ~ EOI }
+
+item = _{ stylesheet | component | const_decl }
+
+// ---- stylesheet ----
+stylesheet = { "stylesheet" ~ "{" ~ style_rule* ~ "}" }
+style_rule = { ident ~ "{" ~ style_decl* ~ "}" }
+style_decl = { css_prop ~ "=" ~ css_value }
+css_prop   = @{ (ASCII_ALPHANUMERIC | "-")+ }
+// CSS values run to end of line; we capture them raw and trust CSS.
+css_value  = @{ (!"\n" ~ ANY)+ }
+
+// ---- const (build-time data source) ----
+const_decl = { "const" ~ ident ~ "=" ~ expr }
+
+// ---- component ----
+component = { "component" ~ ident ~ params? ~ block }
+
+params = { "(" ~ (param ~ ("," ~ param)*)? ~ ","? ~ ")" }
+param  = { ident ~ ":" ~ type_name }
+type_name = { ident }
+
+// ---- block: the body of a component or a slot/named-arg ----
+block = { "{" ~ node* ~ "}" }
+
+// ---- nodes (the things inside a block) ----
+// `named_fill` and `local_const` must precede `element`: all three can begin
+// with an identifier, and PEG ordered choice means the more specific forms
+// (which require `=`) have to be tried first or `element` would shadow them.
+node = _{ for_node | if_node | match_node | slot_node | local_const | named_fill | element | text_node }
+
+// A named slot fill inside a component-invocation block: `sidebar = { ... }`.
+// Distinguished from an element by the `=` followed by a block. This is pure
+// syntax — it never binds a value; the evaluator routes it into the named-slot
+// channel of the enclosing element.
+named_fill = { ident ~ "=" ~ block }
+
+// A bind-time constant local to a block: `const x = expr`. Evaluated once when
+// the block is entered. (`var` is intentionally absent until a real build-time
+// mutation need appears.)
+local_const = { "const" ~ ident ~ "=" ~ expr }
+
+// control flow
+for_node = { "for" ~ ident ~ "in" ~ expr ~ block }
+
+if_node  = { "if" ~ expr ~ block ~ else_clause? }
+else_clause = { "else" ~ (if_node | block) }
+
+match_node = { "match" ~ expr ~ "{" ~ match_arm+ ~ "}" }
+match_arm  = { pattern ~ "=>" ~ (block | node) }
+pattern    = { ident ~ ("(" ~ ident ~ ")")? }   // Tag or Tag(binding)
+
+// slot holes (definition side only, semantically)
+slot_node = { "Slot" ~ "(" ~ (slot_arg ~ ("," ~ slot_arg)*)? ~ ","? ~ ")" }
+slot_arg  = { ident ~ "=" ~ expr }
+
+// an element / component invocation: Name(args?) block?
+element = { ident ~ call_args? ~ block? }
+
+call_args = { "(" ~ (arg ~ ("," ~ arg)*)? ~ ","? ~ ")" }
+// arg is either `name = value` (named) or a bare positional expr
+arg = { named_arg | expr }
+named_arg = { attr_name ~ "=" ~ arg_value }
+arg_value = { block | expr }
+
+// Attribute / named-argument names may contain hyphens (data-foo, aria-label,
+// http-equiv) because they map onto HTML attributes. Plain `ident` (used for
+// variables, params, component names) deliberately forbids hyphens so that
+// `a-b` stays unambiguous subtraction.
+attr_name = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_" | "-")* }
+
+// bare text: a string literal sitting in a block
+text_node = { string }
+
+// ---- expressions ----
+expr = { primary ~ (binop ~ primary)* }
+binop = { "==" | "!=" | "<=" | ">=" | "<" | ">" | "+" | "-" | "*" | "/" }
+
+// Keyword literals (number/bool/nil) must precede field_access: `path` matches
+// any bare ident, so `nil`/`true`/`false` would otherwise be swallowed as a
+// one-element path and then fail at eval as an "unknown name". call still leads
+// because it alone needs trailing parens.
+primary = _{ call | number | bool | nil | string | field_access | ident_expr | paren }
+paren = { "(" ~ expr ~ ")" }
+
+// function call in expression position: lastfm.recent(user = "x")
+call = { path ~ "(" ~ (arg ~ ("," ~ arg)*)? ~ ","? ~ ")" }
+field_access = { path }
+path = @{ ident ~ ("." ~ ident)* }
+
+ident_expr = { ident }
+
+// ---- literals ----
+string = ${ "\"" ~ str_inner ~ "\"" }
+str_inner = { (interpolation | escape | str_char)* }
+str_char = { !("\"" | "\\" | "{") ~ ANY }
+escape   = { "\\" ~ ("\"" | "\\" | "n" | "t" | "{" | "}") }
+interpolation = !{ "{" ~ expr ~ "}" }
+
+number = @{ "-"? ~ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? }
+// The trailing lookahead is a word boundary: without it `nil` would match the
+// start of `nilable` (and `true` the start of `truely`), eating an identifier.
+bool   = @{ ("true" | "false") ~ !(ASCII_ALPHANUMERIC | "_") }
+nil    = @{ "nil" ~ !(ASCII_ALPHANUMERIC | "_") }
+
+ident = @{ (ASCII_ALPHA | "_") ~ (ASCII_ALPHANUMERIC | "_")* }

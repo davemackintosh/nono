@@ -1,0 +1,3 @@
+component X {
+  Frobnicate { "this component does not exist" }
+}

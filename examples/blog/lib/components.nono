@@ -1,0 +1,42 @@
+// Shared library: components used across pages, plus the stylesheet.
+
+stylesheet {
+  Prose {
+    max-width = 65ch
+    line-height = 1.6
+  }
+
+  Tag {
+    display = inline-block
+    padding = 0.2em 0.6em
+  }
+}
+
+component Heading(level: string) {
+  // A tiny demo of using a param as an attribute value.
+  h2(data-level = level) { Slot() }
+}
+
+component Prose {
+  p(class = "Prose") { Slot() }
+}
+
+component Tag {
+  span(class = "Tag") { Slot() }
+}
+
+component Post(title: string, date: string) {
+  article {
+    h1 { "{title}" }
+    time(datetime = date) { "{date}" }
+    Slot()
+  }
+}
+
+component Layout(heading: string) {
+  main {
+    h1 { "{heading}" }
+    Slot()
+  }
+  aside { Slot(named = "sidebar", or = nil) }
+}

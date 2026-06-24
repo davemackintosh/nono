@@ -1,0 +1,2 @@
+const stuff = glob("a/*/b/*.md")
+component X { div { "{stuff}" } }
