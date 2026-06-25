@@ -31,7 +31,15 @@ pub struct BuildConfig {
     pub out: PathBuf,
 }
 
-pub fn build(cfg: &BuildConfig) -> Result<()> {
+/// What a build produced. The caller decides whether to announce it (the `build`
+/// command prints a summary; the `dev` server rebuilds silently per request).
+#[derive(Debug)]
+pub struct BuildStats {
+    pub nono_pages: usize,
+    pub content_pages: usize,
+}
+
+pub fn build(cfg: &BuildConfig) -> Result<BuildStats> {
     let pages_dir = cfg.project.join("pages");
     let lib_dir = cfg.project.join("lib");
     let static_dir = cfg.project.join("static");
@@ -227,13 +235,10 @@ pub fn build(cfg: &BuildConfig) -> Result<()> {
         }
     }
 
-    println!(
-        "{} nonos + {} md -> {} pages",
-        page_count,
-        content_count,
-        page_count + content_count
-    );
-    Ok(())
+    Ok(BuildStats {
+        nono_pages: page_count,
+        content_pages: content_count,
+    })
 }
 
 /// A page or layout file must define exactly one component. This is a filesystem

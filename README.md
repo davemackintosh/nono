@@ -152,8 +152,14 @@ show up in `glob` listings either, so half-finished thoughts can sit in
 ```sh
 cargo build --release
 ./target/release/nono build path/to/your-site --out path/to/output
+./target/release/nono dev   path/to/your-site   # serve on http://127.0.0.1:6969
 ./target/release/nono parse path/to/file.nono   # dump the AST (debugging)
 ```
+
+`nono dev` rebuilds the whole site on every request, so you edit a file, hit
+refresh, and see it. A build error renders in the browser instead of taking the
+server down. The port is 6969 because of course it is; pass `--port` if you have
+grown up.
 
 The Last.fm source reads its API key from `NONO_LASTFM_KEY`. If it's unset or
 the call fails, the source errors; pair it with `or =` on the slot, or a weekly

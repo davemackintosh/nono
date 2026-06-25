@@ -32,6 +32,20 @@ To build without a key while poking at the rest, swap the
 `const recent_tracks = glob("no/such/dir/*.md")`. Everything else builds fine,
 the "Listening to" sidebar just comes out empty.
 
+## Live preview
+
+```sh
+cargo run -- dev examples/torture          # http://127.0.0.1:6969
+cargo run -- dev examples/blog --port 8080 # if 6969 offends you
+```
+
+`nono dev` builds into a scratch dir and serves it with a tiny std-only HTTP
+server. It rebuilds on every request, so editing a `.nono` or `.md` file and
+refreshing shows the change. If a build fails, the error renders in the browser
+(and prints to the terminal) rather than killing the server. Vanity URLs work as
+you'd expect: `/posts/x` and `/posts/x/` both resolve to that page. Note the blog
+example still wants `NONO_LASTFM_KEY` (or the empty-glob swap) to build at all.
+
 ## What the first compile turned up
 
 It has now been compiled. `cargo build` is clean and `cargo test` is green. Since

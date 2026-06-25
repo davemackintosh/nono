@@ -5,7 +5,7 @@
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use nono::{build, parser};
+use nono::{build, parser, serve};
 use std::path::PathBuf;
 
 #[derive(Parser)]
@@ -30,6 +30,18 @@ enum Command {
     Parse {
         file: PathBuf,
     },
+    /// Build and serve the site over HTTP, rebuilding on every request.
+    Dev {
+        /// Project directory (contains pages/, lib/, content/).
+        #[arg(default_value = ".")]
+        project: PathBuf,
+        /// Port to serve on. The default is deliberately juvenile.
+        #[arg(short, long, default_value_t = 6969)]
+        port: u16,
+        /// Output directory for the dev build (defaults to a temp dir).
+        #[arg(short, long)]
+        out: Option<PathBuf>,
+    },
 }
 
 fn main() -> Result<()> {
@@ -37,12 +49,22 @@ fn main() -> Result<()> {
     match cli.command {
         Command::Build { project, out } => {
             let cfg = build::BuildConfig { project, out };
-            build::build(&cfg)?;
+            let stats = build::build(&cfg)?;
+            println!(
+                "{} nonos + {} md -> {} pages",
+                stats.nono_pages,
+                stats.content_pages,
+                stats.nono_pages + stats.content_pages
+            );
         }
         Command::Parse { file } => {
             let src = std::fs::read_to_string(&file)?;
             let parsed = parser::parse(&src)?;
             println!("{:#?}", parsed);
+        }
+        Command::Dev { project, port, out } => {
+            let out = out.unwrap_or_else(|| std::env::temp_dir().join("nono-dev"));
+            serve::serve(project, out, port)?;
         }
     }
     Ok(())
