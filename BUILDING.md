@@ -63,7 +63,9 @@ Routing has two halves, and they own their markup in opposite directions.
   layout chosen by, in order: a `layout:` frontmatter field (resolved by
   filename), else the parent directory name verbatim, else `layouts/default.nono`,
   else a loud error. Frontmatter fills the layout's parameters; the rendered body
-  fills its `Slot()`. `draft: true` skips publishing.
+  fills its `Slot()` (which may be handed down through another component, so a
+  layout can reuse your `Post` and write `Post(...) { Slot() }`). `draft: true`
+  keeps a file out of the build: no page, and excluded from `glob` listings too.
 - `lib/*.nono`: shared components and the stylesheet, loaded into every page. No
   one-component rule here: a lib file can hold as many components as you fancy.
 - `layouts/*.nono`: one component each, same as pages, but selected by markdown

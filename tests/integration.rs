@@ -119,6 +119,19 @@ fn slot_fill_sees_caller_const() {
 }
 
 #[test]
+fn slot_fill_routed_through_subcomponent() {
+    // Card wraps its own slot in Box. The content P passes to Card must travel
+    // through Box's slot and still appear. Before fills were captured for nested
+    // slots, the inner Slot() resolved against nothing and the body vanished.
+    let src = r#"
+        component Box { div { Slot() } }
+        component Card { article { Box { Slot() } } }
+        component P { Card { "hello" } }
+    "#;
+    assert_eq!(render(src, "P"), "<article><div>hello</div></article>");
+}
+
+#[test]
 fn unknown_element_errors() {
     let err = render_err(r#"component P { Frobnicate { "x" } }"#, "P");
     assert!(err.contains("Frobnicate"), "got: {err}");

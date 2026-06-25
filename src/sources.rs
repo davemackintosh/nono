@@ -113,6 +113,10 @@ pub fn glob(root: &Path, pattern: &str) -> Result<Value> {
         let v = read_markdown(root, &rel)?;
         out.push(v);
     }
+    // Drafts are unpublished, full stop: they get no page (see build.rs) and they
+    // don't show up in listings either. Drop them here so `for post in posts`
+    // never has to think about it.
+    out.retain(|v| !matches!(v.get_field("draft"), Some(Value::Bool(true))));
     // Sort by date descending if present, else by slug.
     out.sort_by(|a, b| {
         let da = a.get_field("date").map(|v| v.to_string()).unwrap_or_default();

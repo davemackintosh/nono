@@ -1,16 +1,11 @@
-// Layout for everything under content/posts/. It's selected by the file's
-// location (content/posts/<x>.md -> layouts/posts.nono), not by this
-// component's name, so it can be called whatever reads best.
+// Layout for everything under content/posts/. Selected by the file's location
+// (content/posts/<x>.md -> layouts/posts.nono), not by this component's name.
 //
-// The markdown body lands in Slot(). The wrapper is deliberately inline HTML:
-// the body slot only resolves inside raw elements, so we don't route it down
-// through the Layout/Post components (that would swallow it).
+// It reuses the Post component from lib/ and hands the markdown body straight
+// through Post's own Slot(). The body fills this layout's Slot(), which is
+// nested inside Post; the evaluator carries the fill down so it lands correctly.
 component PostLayout(title: string, date: string) {
-  main {
-    article {
-      h1 { "{title}" }
-      time(datetime = date) { "{date}" }
-      Slot()
-    }
+  Post(title = title, date = date) {
+    Slot()
   }
 }

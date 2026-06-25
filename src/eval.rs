@@ -24,6 +24,11 @@ struct SlotFills {
     /// The caller's environment at the point of the invocation. Empty for the
     /// top-level page render.
     capture: Env,
+    /// The slot fills that were active where these fill nodes were written, so a
+    /// `Slot()` appearing inside a fill resolves to the enclosing component's
+    /// slot instead of vanishing. This is what lets a layout pass its body down
+    /// through another component, e.g. `Post(...) { Slot() }`. None at the top.
+    capture_fills: Option<Box<SlotFills>>,
 }
 
 pub struct Evaluator {
@@ -92,9 +97,8 @@ impl Evaluator {
     /// (`.md` files that are pages in their own right).
     ///
     /// The body is injected as the default slot fill, so a layout marks where it
-    /// goes with `Slot()`. Mind the engine's slot rule: that `Slot()` only
-    /// resolves when it sits inside raw HTML (which threads fills through), not
-    /// when routed down through another component's block.
+    /// goes with `Slot()`. That `Slot()` may sit inside raw HTML or be handed
+    /// down through another component (e.g. `Post(...) { Slot() }`); both resolve.
     pub fn render_layout(
         &self,
         component: &str,
@@ -129,6 +133,7 @@ impl Evaluator {
             default: vec![Node::RawHtml(body_html)],
             named: HashMap::new(),
             capture: scope.clone(),
+            capture_fills: None,
         };
 
         self.eval_nodes(&comp.body, &scope, &fills)
@@ -234,10 +239,16 @@ impl Evaluator {
         match filled {
             Some(nodes) if !nodes.is_empty() => {
                 // Slot contents were captured at the call site and must evaluate
-                // in the caller's environment, not the callee's. We render them
-                // with `fills.capture` and a fresh (empty) SlotFills, since a
-                // fill cannot itself contain unfilled slots of the callee.
-                self.eval_nodes(nodes, &fills.capture, &SlotFills::default())
+                // in the caller's environment, not the callee's. We also restore
+                // the slot fills that were active there, so a `Slot()` nested
+                // inside this fill resolves to the enclosing component's slot (a
+                // layout handing its body through `Post(...) { Slot() }`) rather
+                // than rendering nothing.
+                let inner_fills = match &fills.capture_fills {
+                    Some(f) => (**f).clone(),
+                    None => SlotFills::default(),
+                };
+                self.eval_nodes(nodes, &fills.capture, &inner_fills)
             }
             _ => {
                 // Unfilled: use the `or =` fallback if present.
@@ -306,7 +317,7 @@ impl Evaluator {
         comp: &Component,
         call: &Element,
         env: &Env,
-        _outer_fills: &SlotFills,
+        outer_fills: &SlotFills,
     ) -> Result<Vec<Html>> {
         // Bind parameters from named/positional args.
         let mut scope = Env::new();
@@ -369,6 +380,9 @@ impl Evaluator {
             // Capture the caller's environment so fills referencing caller
             // locals (e.g. an enclosing `for` binding) resolve correctly.
             capture: env.clone(),
+            // Capture the fills active here too, so a `Slot()` inside one of
+            // these fills reaches the enclosing component's slot.
+            capture_fills: Some(Box::new(outer_fills.clone())),
         };
 
         // The component body sees only its own parameters (plus consts, which

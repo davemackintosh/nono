@@ -140,11 +140,12 @@ date: 2026-06-20
 After eleven years, I am tired. Here is what I did instead.
 ```
 
-One wrinkle worth knowing: that body `Slot()` only resolves inside plain HTML
-elements, so a layout wraps the body in markup directly rather than handing it
-down through another component's slot. And `draft: true` in the frontmatter keeps
-a file out of the output, so you can leave half-finished thoughts in `content/`
-without publishing them by accident.
+That body `Slot()` can sit in plain HTML, as above, or be handed down through
+another component: a layout that reuses your `Post` component as
+`Post(...) { Slot() }` works fine, the body travels through. And `draft: true` in
+the frontmatter keeps a file out of the build entirely: no page, and it won't
+show up in `glob` listings either, so half-finished thoughts can sit in
+`content/` without leaking.
 
 ## Usage
 
@@ -157,6 +158,12 @@ cargo build --release
 The Last.fm source reads its API key from `NONO_LASTFM_KEY`. If it's unset or
 the call fails, the source errors; pair it with `or =` on the slot, or a weekly
 rebuild cadence, so a flaky API never takes down the build.
+
+## Editor support
+
+There's a tree-sitter grammar in [`tree-sitter-nono/`](tree-sitter-nono/) for
+syntax highlighting and structural editing of `.nono` files. It tracks the real
+grammar and is checked against every example here.
 
 ## Status
 

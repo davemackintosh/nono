@@ -34,9 +34,11 @@ Then we took the design somewhere new, on purpose:
   per-page titles come from frontmatter. See README and BUILDING for the full
   shape.
 
-Known follow-ups left on the table: the nested-slot limitation (a layout can't
-route the body through another component's slot), and whether drafts should also
-drop out of index *listings* and not just output.
+Both of the follow-ups that were on the table are now done: the nested-slot
+limitation is gone (a fill captures the slot context around it, so a layout can
+route its body through another component, e.g. `Post(...) { Slot() }`), and
+drafts now drop out of `glob` listings as well as output. There is also a
+tree-sitter grammar under `tree-sitter-nono/` for editor support.
 
 ## First actions, in order
 
