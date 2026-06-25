@@ -1,0 +1,217 @@
+==================
+element, const and interpolation
+==================
+
+component P {
+  const name = "Dave"
+  div(class = "x") { "hi {name}" }
+}
+
+---
+
+(source_file
+  (component
+    name: (identifier)
+    body: (block
+      (local_const
+        name: (identifier)
+        value: (string
+          (string_content)))
+      (element
+        name: (identifier)
+        arguments: (arguments
+          (argument
+            (named_argument
+              name: (identifier)
+              value: (string
+                (string_content)))))
+        body: (block
+          (text
+            (string
+              (string_content)
+              (interpolation
+                (field_access
+                  (path
+                    (identifier)))))))))))
+
+==================
+for and match
+==================
+
+component List {
+  for post in posts {
+    match post.kind {
+      Note => Prose { "{post.title}" }
+      _ => span { "other" }
+    }
+  }
+}
+
+---
+
+(source_file
+  (component
+    name: (identifier)
+    body: (block
+      (for_statement
+        binding: (identifier)
+        iterable: (field_access
+          (path
+            (identifier)))
+        body: (block
+          (match_statement
+            value: (field_access
+              (path
+                (identifier)
+                (identifier)))
+            (match_arm
+              pattern: (pattern
+                tag: (identifier))
+              body: (element
+                name: (identifier)
+                body: (block
+                  (text
+                    (string
+                      (interpolation
+                        (field_access
+                          (path
+                            (identifier)
+                            (identifier)))))))))
+            (match_arm
+              pattern: (pattern
+                tag: (identifier))
+              body: (element
+                name: (identifier)
+                body: (block
+                  (text
+                    (string
+                      (string_content))))))))))))
+
+==================
+slots, named fill and params
+==================
+
+component Layout(heading: string) {
+  main { h1 { "{heading}" } Slot() }
+  aside { Slot(named = "sidebar", or = nil) }
+}
+component Page {
+  Layout(heading = "Hi") {
+    sidebar = { "side" }
+    "body"
+  }
+}
+
+---
+
+(source_file
+  (component
+    name: (identifier)
+    parameters: (parameters
+      (parameter
+        name: (identifier)
+        type: (type
+          (identifier))))
+    body: (block
+      (element
+        name: (identifier)
+        body: (block
+          (element
+            name: (identifier)
+            body: (block
+              (text
+                (string
+                  (interpolation
+                    (field_access
+                      (path
+                        (identifier))))))))
+          (slot)))
+      (element
+        name: (identifier)
+        body: (block
+          (slot
+            (slot_argument
+              name: (identifier)
+              value: (string
+                (string_content)))
+            (slot_argument
+              name: (identifier)
+              value: (nil)))))))
+  (component
+    name: (identifier)
+    body: (block
+      (element
+        name: (identifier)
+        arguments: (arguments
+          (argument
+            (named_argument
+              name: (identifier)
+              value: (string
+                (string_content)))))
+        body: (block
+          (named_fill
+            name: (identifier)
+            value: (block
+              (text
+                (string
+                  (string_content)))))
+          (text
+            (string
+              (string_content))))))))
+
+==================
+stylesheet, data source and arithmetic
+==================
+
+stylesheet {
+  Prose {
+    max-width = 65ch
+    line-height = 1.6
+  }
+}
+const posts = glob("content/posts/*.md")
+component M { p(data-level = "2") { "{1 + 2 * 3}" } }
+
+---
+
+(source_file
+  (stylesheet
+    (style_rule
+      selector: (identifier)
+      (style_declaration
+        property: (css_property)
+        value: (css_value))
+      (style_declaration
+        property: (css_property)
+        value: (css_value))))
+  (const_declaration
+    name: (identifier)
+    value: (call
+      function: (path
+        (identifier))
+      (argument
+        (string
+          (string_content)))))
+  (component
+    name: (identifier)
+    body: (block
+      (element
+        name: (identifier)
+        arguments: (arguments
+          (argument
+            (named_argument
+              name: (hyphenated_name)
+              value: (string
+                (string_content)))))
+        body: (block
+          (text
+            (string
+              (interpolation
+                (binary_expression
+                  left: (binary_expression
+                    left: (number)
+                    operator: (binary_operator)
+                    right: (number))
+                  operator: (binary_operator)
+                  right: (number))))))))))
+

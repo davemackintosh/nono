@@ -1,0 +1,10 @@
+node_modules/
+build/
+*.wasm
+*.o
+*.a
+*.dylib
+*.so
+
+# The generated parser under src/ IS committed, so the grammar is usable without
+# running the CLI. Only the build outputs above are ignored.

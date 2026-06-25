@@ -1,0 +1,22 @@
+{
+  "name": "tree-sitter-nono",
+  "version": "0.1.0",
+  "description": "Tree-sitter grammar for Nono, the spite-driven static site generator's DSL",
+  "license": "MIT",
+  "main": "bindings/node",
+  "scripts": {
+    "generate": "tree-sitter generate",
+    "test": "tree-sitter test",
+    "parse": "tree-sitter parse"
+  },
+  "tree-sitter": [
+    {
+      "scope": "source.nono",
+      "file-types": ["nono"],
+      "highlights": "queries/highlights.scm"
+    }
+  ],
+  "devDependencies": {
+    "tree-sitter-cli": "^0.25.0"
+  }
+}
