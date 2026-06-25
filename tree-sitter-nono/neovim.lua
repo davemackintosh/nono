@@ -65,7 +65,20 @@ local function ensure_compiled()
 		vim.notify("nono: parser build failed\n" .. (result.stderr or ""), vim.log.levels.ERROR)
 		return false
 	end
+	-- Only fires when a rebuild actually happened (stale or missing .so), so it's
+	-- the breadcrumb you want after pulling a grammar change.
+	vim.notify("nono: parser (re)compiled", vim.log.levels.INFO)
 	return true
+end
+
+-- Force a clean rebuild. tree-sitter can't hot-swap a language that's already
+-- loaded, so this recompiles and asks you to restart nvim to pick it up. Use it
+-- after pulling a grammar change if highlighting looks stale.
+function M.rebuild()
+	os.remove(so)
+	if ensure_compiled() then
+		vim.notify("nono: rebuilt. Restart nvim (:qa) to load the new parser.", vim.log.levels.WARN)
+	end
 end
 
 function M.setup()
@@ -90,6 +103,11 @@ function M.setup()
 
 	-- .nono files are the `nono` filetype.
 	vim.filetype.add({ extension = { nono = "nono" } })
+
+	-- `:NonoRebuild` to force a recompile after a grammar change.
+	vim.api.nvim_create_user_command("NonoRebuild", function()
+		M.rebuild()
+	end, { desc = "Recompile the Nono tree-sitter parser" })
 
 	-- Switch highlighting on for nono buffers, now and in future.
 	vim.api.nvim_create_autocmd("FileType", {

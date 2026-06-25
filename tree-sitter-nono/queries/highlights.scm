@@ -59,8 +59,10 @@
 ; A value reference: `post`, `track.artist`.
 (field_access (path (identifier) @variable))
 
-; A data-source / function call: `glob(...)`, `lastfm.recent(...)`.
+; A function call: a user `fn`, or a generic builtin.
 (call function: (path (identifier) @function))
+((call function: (path (identifier) @function.builtin))
+  (#any-of? @function.builtin "glob" "markdown" "http_get" "env"))
 
 ; Component and function definitions, element / component invocations.
 (component name: (identifier) @type)
