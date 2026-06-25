@@ -176,76 +176,48 @@ fn glob_paths(root: &Path, pattern: &str) -> Result<Vec<String>> {
     Ok(out)
 }
 
-/// `lastfm.recent(user = "dave", limit = 10)` -> a List of track Maps.
+/// `http_get("https://...")` -> the JSON response parsed into a Value (object ->
+/// Map, array -> List, and so on). This is the generic network primitive:
+/// services like Last.fm are built on top of it in the standard library, not in
+/// the compiler core.
 ///
-/// Reads the API key from the NONO_LASTFM_KEY environment variable. If the key
-/// is absent or the request fails, returns an Err; the caller decides whether
-/// to fall back (see eval's handling of `or =`). This keeps the network failure
-/// quarantined to the data-source boundary.
-pub fn lastfm_recent(user: &str, limit: u32) -> Result<Value> {
-    let key = std::env::var("NONO_LASTFM_KEY")
-        .map_err(|_| anyhow!("NONO_LASTFM_KEY not set; cannot fetch Last.fm data"))?;
-
-    let url = format!(
-        "https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user={}&api_key={}&format=json&limit={}",
-        urlencode(user),
-        urlencode(&key),
-        limit
-    );
-
-    let resp: serde_json::Value = ureq::get(&url)
+/// A 4xx/5xx response or a transport error becomes an Err, which aborts the
+/// build with a clear message. A wrong username (Last.fm answers 404) or a dead
+/// network should be loud, not silently empty.
+pub fn http_get(url: &str) -> Result<Value> {
+    let resp: serde_json::Value = ureq::get(url)
         .call()
-        .context("calling Last.fm")?
+        .with_context(|| format!("calling {}", url))?
         .into_json()
-        .context("parsing Last.fm JSON")?;
-
-    let tracks = resp
-        .get("recenttracks")
-        .and_then(|r| r.get("track"))
-        .and_then(|t| t.as_array())
-        .ok_or_else(|| anyhow!("unexpected Last.fm response shape"))?;
-
-    let mut out = Vec::new();
-    for t in tracks {
-        let mut m = BTreeMap::new();
-        let artist = t
-            .get("artist")
-            .and_then(|a| a.get("#text"))
-            .and_then(|s| s.as_str())
-            .unwrap_or("")
-            .to_string();
-        let name = t.get("name").and_then(|s| s.as_str()).unwrap_or("").to_string();
-        let album = t
-            .get("album")
-            .and_then(|a| a.get("#text"))
-            .and_then(|s| s.as_str())
-            .unwrap_or("")
-            .to_string();
-        let now_playing = t
-            .get("@attr")
-            .and_then(|a| a.get("nowplaying"))
-            .and_then(|s| s.as_str())
-            .map(|s| s == "true")
-            .unwrap_or(false);
-
-        m.insert("artist".into(), Value::Str(artist));
-        m.insert("name".into(), Value::Str(name));
-        m.insert("album".into(), Value::Str(album));
-        m.insert("now_playing".into(), Value::Bool(now_playing));
-        out.push(Value::Map(m));
-    }
-    Ok(Value::List(out))
+        .with_context(|| format!("parsing JSON from {}", url))?;
+    Ok(json_to_value(resp))
 }
 
-fn urlencode(s: &str) -> String {
-    let mut out = String::new();
-    for b in s.bytes() {
-        match b {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
-                out.push(b as char)
+/// `env("NONO_LASTFM_KEY")` -> the environment variable as a Str. Errors if the
+/// variable is unset, so a missing secret fails the build with a clear message
+/// instead of silently sending an empty value.
+pub fn env_var(name: &str) -> Result<Value> {
+    match std::env::var(name) {
+        Ok(v) => Ok(Value::Str(v)),
+        Err(_) => bail!("environment variable `{}` is not set", name),
+    }
+}
+
+fn json_to_value(j: serde_json::Value) -> Value {
+    match j {
+        serde_json::Value::Null => Value::Nil,
+        serde_json::Value::Bool(b) => Value::Bool(b),
+        serde_json::Value::Number(n) => Value::Number(n.as_f64().unwrap_or(0.0)),
+        serde_json::Value::String(s) => Value::Str(s),
+        serde_json::Value::Array(a) => {
+            Value::List(a.into_iter().map(json_to_value).collect())
+        }
+        serde_json::Value::Object(o) => {
+            let mut map = BTreeMap::new();
+            for (k, v) in o {
+                map.insert(k, json_to_value(v));
             }
-            _ => out.push_str(&format!("%{:02X}", b)),
+            Value::Map(map)
         }
     }
-    out
 }

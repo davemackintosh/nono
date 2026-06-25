@@ -30,9 +30,10 @@ component P {
             (string
               (string_content)
               (interpolation
-                (field_access
-                  (path
-                    (identifier)))))))))))
+                (postfix_expression
+                  base: (field_access
+                    (path
+                      (identifier))))))))))))
 
 ==================
 for and match
@@ -55,15 +56,18 @@ component List {
     body: (block
       (for_statement
         binding: (identifier)
-        iterable: (field_access
-          (path
-            (identifier)))
+        iterable: (postfix_expression
+          base: (field_access
+            (path
+              (identifier))))
         body: (block
           (match_statement
-            value: (field_access
-              (path
-                (identifier)
-                (identifier)))
+            value: (postfix_expression
+              base: (field_access
+                (path
+                  (identifier)))
+              (member_accessor
+                property: (identifier)))
             (match_arm
               pattern: (pattern
                 tag: (identifier))
@@ -73,10 +77,12 @@ component List {
                   (text
                     (string
                       (interpolation
-                        (field_access
-                          (path
-                            (identifier)
-                            (identifier)))))))))
+                        (postfix_expression
+                          base: (field_access
+                            (path
+                              (identifier)))
+                          (member_accessor
+                            property: (identifier)))))))))
             (match_arm
               pattern: (pattern
                 tag: (identifier))
@@ -122,9 +128,10 @@ component Page {
               (text
                 (string
                   (interpolation
-                    (field_access
-                      (path
-                        (identifier))))))))
+                    (postfix_expression
+                      base: (field_access
+                        (path
+                          (identifier)))))))))
           (slot)))
       (element
         name: (identifier)
@@ -186,12 +193,13 @@ component M { p(data-level = "2") { "{1 + 2 * 3}" } }
         value: (css_value))))
   (const_declaration
     name: (identifier)
-    value: (call
-      function: (path
-        (identifier))
-      (argument
-        (string
-          (string_content)))))
+    value: (postfix_expression
+      base: (call
+        function: (path
+          (identifier))
+        (argument
+          (string
+            (string_content))))))
   (component
     name: (identifier)
     body: (block
@@ -215,3 +223,69 @@ component M { p(data-level = "2") { "{1 + 2 * 3}" } }
                   operator: (binary_operator)
                   right: (number))))))))))
 
+==================
+functions and postfix accessors
+==================
+
+fn recent(user: string) = http_get("api?u={user}").recenttracks.track
+component P { div { "{recent(user = "dave")[0].name} at {track.artist["#text"]}" } }
+
+---
+
+(source_file
+  (function
+    name: (identifier)
+    parameters: (parameters
+      (parameter
+        name: (identifier)
+        type: (type
+          (identifier))))
+    body: (postfix_expression
+      base: (call
+        function: (path
+          (identifier))
+        (argument
+          (string
+            (string_content)
+            (interpolation
+              (postfix_expression
+                base: (field_access
+                  (path
+                    (identifier))))))))
+      (member_accessor
+        property: (identifier))
+      (member_accessor
+        property: (identifier))))
+  (component
+    name: (identifier)
+    body: (block
+      (element
+        name: (identifier)
+        body: (block
+          (text
+            (string
+              (interpolation
+                (postfix_expression
+                  base: (call
+                    function: (path
+                      (identifier))
+                    (argument
+                      (named_argument
+                        name: (identifier)
+                        value: (string
+                          (string_content)))))
+                  (subscript_accessor
+                    index: (number))
+                  (member_accessor
+                    property: (identifier))))
+              (string_content)
+              (interpolation
+                (postfix_expression
+                  base: (field_access
+                    (path
+                      (identifier)))
+                  (member_accessor
+                    property: (identifier))
+                  (subscript_accessor
+                    index: (string
+                      (string_content))))))))))))

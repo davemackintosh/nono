@@ -38,7 +38,7 @@ component Layout(heading: string) {
 
 ```nono
 // pages/index.nono — a page is a component; the filesystem is the router
-const recent_tracks = lastfm.recent(user = "dave", limit = 10)
+const recent_tracks = lastfm_recent(user = "davemackintosh", limit = 10)
 const posts         = glob("content/posts/*.md")
 
 component IndexPage {
@@ -46,7 +46,7 @@ component IndexPage {
     sidebar = {                  // fill a named slot, inline
       h2 { "Listening to" }
       for track in recent_tracks {
-        Prose { "{track.artist} — {track.name}" }
+        Prose { "{track.artist["#text"]} - {track.name}" }
       }
     }
 
@@ -69,9 +69,16 @@ component IndexPage {
 - **Slots are holes; fills are arguments.** `Slot()` / `Slot(named = "x")` mark
   holes in a component. `name = { ... }` inside an invocation fills a named one;
   the unnamed trailing content fills `Slot()`. `or = nil` makes a slot optional.
-- **`const` is bind-time.** Data sources (`glob`, `markdown`, `lastfm.recent`)
-  run during evaluation and fold into the tree. There is no `var` yet, because
-  nothing at build time legitimately mutates. It arrives when something needs it.
+- **`const` is bind-time.** Data sources run during evaluation and fold into the
+  tree. The builtins are deliberately generic: `glob`, `markdown`, `http_get`,
+  `env`. There is no `var` yet, because nothing at build time legitimately
+  mutates. It arrives when something needs it.
+- **Functions are userland, and so is the standard library.** `fn name(p: type)
+  = expr` defines a value-returning function, distinct from a component (which
+  returns markup). The core ships no service-specific builtin: `lastfm_recent`
+  is a `fn` in the standard library (`src/std.nono`), built on `http_get` and
+  `env`. Bracket indexing, `track.artist["#text"]`, reaches JSON keys that aren't
+  valid identifiers.
 - **The filesystem is the router, and it routes two things.** A `.nono` under
   `pages/` is a page that happens to be a component: `pages/about.nono` →
   `about/index.html` (vanity URLs), `pages/index.nono` → `index.html`. A `.md`

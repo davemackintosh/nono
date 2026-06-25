@@ -1,2 +1,5 @@
 target/
 out/
+
+# Local env (direnv): holds NONO_LASTFM_KEY and the like. Never commit it.
+.envrc

@@ -138,6 +138,17 @@ fn unknown_element_errors() {
 }
 
 #[test]
+fn function_call_in_interpolation() {
+    // A value-returning `fn` is distinct from a component and usable in any
+    // expression position.
+    let src = r#"
+        fn shout(word: string) = "{word}!!!"
+        component P { div { "{shout(word = "hi")}" } }
+    "#;
+    assert_eq!(render(src, "P"), "<div>hi!!!</div>");
+}
+
+#[test]
 fn match_on_string_value() {
     // A bare string is its own match tag, so `match s { Note => ... }` fires the
     // arm whose name equals the string. The `match_on_kind_field` test below uses

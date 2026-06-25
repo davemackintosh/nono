@@ -106,6 +106,37 @@ fn missing_layout_is_a_loud_error() {
 }
 
 #[test]
+fn bracket_indexing_reads_map_and_list() {
+    // `post["title"]` reaches a map field by string key (needed for JSON keys
+    // like "#text"), and `posts[0]` indexes a list. Tested through a real
+    // markdown map so no network is involved.
+    let root = scratch("indexing");
+    let proj = root.join("project");
+    let out = root.join("out");
+    write(&proj, "content/posts/p.md", "---\ntitle: Hello\n---\nbody\n");
+    write(&proj, "layouts/posts.nono", "component L(title: string) { article { Slot() } }");
+    write(
+        &proj,
+        "pages/index.nono",
+        r#"
+        const posts = glob("content/posts/*.md")
+        component Home {
+          div {
+            for post in posts { span { "{post["title"]}" } }
+            p { "{posts[0]["title"]}" }
+          }
+        }
+        "#,
+    );
+
+    build(&BuildConfig { project: proj, out: out.clone() }).expect("build failed");
+
+    let page = fs::read_to_string(out.join("index.html")).expect("index missing");
+    assert!(page.contains("<span>Hello</span>"), "string key on map: {page}");
+    assert!(page.contains("<p>Hello</p>"), "list index then key: {page}");
+}
+
+#[test]
 fn page_with_two_components_is_rejected() {
     let root = scratch("two_components");
     let proj = root.join("project");

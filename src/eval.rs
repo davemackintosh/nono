@@ -31,8 +31,14 @@ struct SlotFills {
     capture_fills: Option<Box<SlotFills>>,
 }
 
+/// The standard library: plain Nono, compiled into the binary and loaded into
+/// every project. It defines helpers (e.g. `lastfm_recent`) on top of the
+/// generic builtins, so the core stays free of any specific service.
+const STDLIB: &str = include_str!("std.nono");
+
 pub struct Evaluator {
     components: HashMap<String, Component>,
+    functions: HashMap<String, Function>,
     consts: HashMap<String, Value>,
     html_tags: std::collections::BTreeSet<&'static str>,
     root: PathBuf,
@@ -46,12 +52,21 @@ impl Evaluator {
     /// is where data sources like glob/lastfm actually run).
     pub fn new(items: Vec<Item>, root: PathBuf) -> Result<Self> {
         let mut components = HashMap::new();
+        let mut functions = HashMap::new();
         let mut const_decls = Vec::new();
 
-        for item in items {
+        // The standard library is parsed and registered before user items, so a
+        // project gets its helpers for free and may still shadow them by name.
+        let stdlib = crate::parser::parse(STDLIB)
+            .map_err(|e| anyhow!("parsing embedded standard library: {}", e))?;
+
+        for item in stdlib.items.into_iter().chain(items) {
             match item {
                 Item::Component(c) => {
                     components.insert(c.name.clone(), c);
+                }
+                Item::Function(f) => {
+                    functions.insert(f.name.clone(), f);
                 }
                 Item::Const(c) => const_decls.push(c),
                 Item::Stylesheet(_) => {} // collected separately by the caller
@@ -60,6 +75,7 @@ impl Evaluator {
 
         let mut ev = Evaluator {
             components,
+            functions,
             consts: HashMap::new(),
             html_tags: known_html_tags(),
             root,
@@ -405,6 +421,16 @@ impl Evaluator {
             Expr::Str(t) => Ok(Value::Str(self.eval_template(t, env)?)),
             Expr::Path(path) => self.eval_path(path, env),
             Expr::Call(path, args) => self.eval_call(path, args, env),
+            Expr::Field(base, name) => {
+                let v = self.eval_expr(base, env)?;
+                v.get_field(name)
+                    .ok_or_else(|| anyhow!("no field `{}` on value", name))
+            }
+            Expr::Index(base, key) => {
+                let v = self.eval_expr(base, env)?;
+                let k = self.eval_expr(key, env)?;
+                index_value(&v, &k)
+            }
             Expr::Binary(l, op, r) => {
                 let lv = self.eval_expr(l, env)?;
                 let rv = self.eval_expr(r, env)?;
@@ -432,7 +458,14 @@ impl Evaluator {
 
     fn eval_call(&self, path: &[String], args: &[Arg], env: &Env) -> Result<Value> {
         let joined = path.join(".");
-        // Resolve named/positional args to values.
+
+        // A user-defined function takes precedence and receives its arguments as
+        // expressions bound to its parameters, so check it before the builtins.
+        if let Some(func) = self.functions.get(&joined) {
+            return self.call_function(func, args, env);
+        }
+
+        // Otherwise it is a generic builtin; resolve its arguments to values.
         let mut named: HashMap<String, Value> = HashMap::new();
         let mut positional: Vec<Value> = Vec::new();
         for arg in args {
@@ -441,7 +474,7 @@ impl Evaluator {
                     named.insert(n.clone(), self.eval_expr(e, env)?);
                 }
                 Arg::Named(_, ArgValue::Block(_)) => {
-                    bail!("data source call cannot take a block argument")
+                    bail!("builtin call cannot take a block argument")
                 }
                 Arg::Positional(e) => positional.push(self.eval_expr(e, env)?),
             }
@@ -463,22 +496,58 @@ impl Evaluator {
                     .ok_or_else(|| anyhow!("markdown requires a file"))?;
                 sources::read_markdown(&self.root, &file)
             }
-            "lastfm.recent" => {
-                let user = named
-                    .get("user")
+            "http_get" => {
+                let url = named
+                    .get("url")
+                    .or_else(|| positional.get(0))
                     .map(|v| v.to_string())
-                    .ok_or_else(|| anyhow!("lastfm.recent requires user="))?;
-                let limit = named
-                    .get("limit")
-                    .map(|v| match v {
-                        Value::Number(n) => *n as u32,
-                        _ => 10,
-                    })
-                    .unwrap_or(10);
-                sources::lastfm_recent(&user, limit)
+                    .ok_or_else(|| anyhow!("http_get requires a url"))?;
+                sources::http_get(&url)
+            }
+            "env" => {
+                let name = named
+                    .get("name")
+                    .or_else(|| positional.get(0))
+                    .map(|v| v.to_string())
+                    .ok_or_else(|| anyhow!("env requires a variable name"))?;
+                sources::env_var(&name)
             }
             other => bail!("unknown function `{}`", other),
         }
+    }
+
+    /// Call a user-defined function: bind its parameters from the call's
+    /// arguments (evaluated in the caller's env), then evaluate the body in a
+    /// scope of just those parameters. Like a component, a function sees its
+    /// declared parameters plus global consts/functions, not the caller's locals.
+    fn call_function(&self, func: &Function, args: &[Arg], env: &Env) -> Result<Value> {
+        let mut positional = Vec::new();
+        let mut named: HashMap<String, &Expr> = HashMap::new();
+        for arg in args {
+            match arg {
+                Arg::Positional(e) => positional.push(e),
+                Arg::Named(n, ArgValue::Expr(e)) => {
+                    named.insert(n.clone(), e);
+                }
+                Arg::Named(_, ArgValue::Block(_)) => {
+                    bail!("function `{}` argument cannot be a block", func.name)
+                }
+            }
+        }
+
+        let mut scope = Env::new();
+        let mut pos_iter = positional.into_iter();
+        for param in &func.params {
+            if let Some(e) = named.get(&param.name) {
+                scope.insert(param.name.clone(), self.eval_expr(e, env)?);
+            } else if let Some(e) = pos_iter.next() {
+                scope.insert(param.name.clone(), self.eval_expr(e, env)?);
+            } else {
+                bail!("missing argument `{}` for function {}", param.name, func.name);
+            }
+        }
+
+        self.eval_expr(&func.body, &scope)
     }
 
     fn eval_binop(&self, l: Value, op: BinOp, r: Value) -> Result<Value> {
@@ -525,6 +594,24 @@ impl Evaluator {
             }
         }
         Ok(out)
+    }
+}
+
+/// Index into a value: a string key reads a map field (so `m["#text"]` reaches
+/// JSON keys that aren't identifiers), a number reads a list element.
+fn index_value(v: &Value, key: &Value) -> Result<Value> {
+    match key {
+        Value::Str(s) => v
+            .get_field(s)
+            .ok_or_else(|| anyhow!("no key `{}` on value", s)),
+        Value::Number(n) => match v {
+            Value::List(l) => l
+                .get(*n as usize)
+                .cloned()
+                .ok_or_else(|| anyhow!("index {} out of range (length {})", *n as usize, l.len())),
+            _ => bail!("cannot index a non-list with a number"),
+        },
+        other => bail!("index key must be a string or number, got {:?}", other),
     }
 }
 

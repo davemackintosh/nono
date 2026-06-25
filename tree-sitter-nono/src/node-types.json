@@ -16,14 +16,6 @@
           "named": true
         },
         {
-          "type": "call",
-          "named": true
-        },
-        {
-          "type": "field_access",
-          "named": true
-        },
-        {
           "type": "named_argument",
           "named": true
         },
@@ -36,7 +28,7 @@
           "named": true
         },
         {
-          "type": "parenthesized_expression",
+          "type": "postfix_expression",
           "named": true
         },
         {
@@ -78,14 +70,6 @@
             "named": true
           },
           {
-            "type": "call",
-            "named": true
-          },
-          {
-            "type": "field_access",
-            "named": true
-          },
-          {
             "type": "nil",
             "named": true
           },
@@ -94,7 +78,7 @@
             "named": true
           },
           {
-            "type": "parenthesized_expression",
+            "type": "postfix_expression",
             "named": true
           },
           {
@@ -126,14 +110,6 @@
             "named": true
           },
           {
-            "type": "call",
-            "named": true
-          },
-          {
-            "type": "field_access",
-            "named": true
-          },
-          {
             "type": "nil",
             "named": true
           },
@@ -142,7 +118,7 @@
             "named": true
           },
           {
-            "type": "parenthesized_expression",
+            "type": "postfix_expression",
             "named": true
           },
           {
@@ -295,14 +271,6 @@
             "named": true
           },
           {
-            "type": "call",
-            "named": true
-          },
-          {
-            "type": "field_access",
-            "named": true
-          },
-          {
             "type": "nil",
             "named": true
           },
@@ -311,7 +279,7 @@
             "named": true
           },
           {
-            "type": "parenthesized_expression",
+            "type": "postfix_expression",
             "named": true
           },
           {
@@ -429,11 +397,39 @@
             "named": true
           },
           {
-            "type": "call",
+            "type": "nil",
             "named": true
           },
           {
-            "type": "field_access",
+            "type": "number",
+            "named": true
+          },
+          {
+            "type": "postfix_expression",
+            "named": true
+          },
+          {
+            "type": "string",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "named": true,
+    "fields": {
+      "body": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "binary_expression",
+            "named": true
+          },
+          {
+            "type": "boolean",
             "named": true
           },
           {
@@ -445,11 +441,31 @@
             "named": true
           },
           {
-            "type": "parenthesized_expression",
+            "type": "postfix_expression",
             "named": true
           },
           {
             "type": "string",
+            "named": true
+          }
+        ]
+      },
+      "name": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      },
+      "parameters": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "parameters",
             "named": true
           }
         ]
@@ -473,14 +489,6 @@
             "named": true
           },
           {
-            "type": "call",
-            "named": true
-          },
-          {
-            "type": "field_access",
-            "named": true
-          },
-          {
             "type": "nil",
             "named": true
           },
@@ -489,7 +497,7 @@
             "named": true
           },
           {
-            "type": "parenthesized_expression",
+            "type": "postfix_expression",
             "named": true
           },
           {
@@ -537,14 +545,6 @@
           "named": true
         },
         {
-          "type": "call",
-          "named": true
-        },
-        {
-          "type": "field_access",
-          "named": true
-        },
-        {
           "type": "nil",
           "named": true
         },
@@ -553,7 +553,7 @@
           "named": true
         },
         {
-          "type": "parenthesized_expression",
+          "type": "postfix_expression",
           "named": true
         },
         {
@@ -590,14 +590,6 @@
             "named": true
           },
           {
-            "type": "call",
-            "named": true
-          },
-          {
-            "type": "field_access",
-            "named": true
-          },
-          {
             "type": "nil",
             "named": true
           },
@@ -606,7 +598,7 @@
             "named": true
           },
           {
-            "type": "parenthesized_expression",
+            "type": "postfix_expression",
             "named": true
           },
           {
@@ -692,14 +684,6 @@
             "named": true
           },
           {
-            "type": "call",
-            "named": true
-          },
-          {
-            "type": "field_access",
-            "named": true
-          },
-          {
             "type": "nil",
             "named": true
           },
@@ -708,7 +692,7 @@
             "named": true
           },
           {
-            "type": "parenthesized_expression",
+            "type": "postfix_expression",
             "named": true
           },
           {
@@ -727,6 +711,22 @@
           "named": true
         }
       ]
+    }
+  },
+  {
+    "type": "member_accessor",
+    "named": true,
+    "fields": {
+      "property": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -764,14 +764,6 @@
             "named": true
           },
           {
-            "type": "call",
-            "named": true
-          },
-          {
-            "type": "field_access",
-            "named": true
-          },
-          {
             "type": "nil",
             "named": true
           },
@@ -780,7 +772,7 @@
             "named": true
           },
           {
-            "type": "parenthesized_expression",
+            "type": "postfix_expression",
             "named": true
           },
           {
@@ -875,14 +867,6 @@
           "named": true
         },
         {
-          "type": "call",
-          "named": true
-        },
-        {
-          "type": "field_access",
-          "named": true
-        },
-        {
           "type": "nil",
           "named": true
         },
@@ -891,7 +875,7 @@
           "named": true
         },
         {
-          "type": "parenthesized_expression",
+          "type": "postfix_expression",
           "named": true
         },
         {
@@ -943,6 +927,44 @@
     }
   },
   {
+    "type": "postfix_expression",
+    "named": true,
+    "fields": {
+      "base": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "call",
+            "named": true
+          },
+          {
+            "type": "field_access",
+            "named": true
+          },
+          {
+            "type": "parenthesized_expression",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "member_accessor",
+          "named": true
+        },
+        {
+          "type": "subscript_accessor",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "slot",
     "named": true,
     "fields": {},
@@ -984,14 +1006,6 @@
             "named": true
           },
           {
-            "type": "call",
-            "named": true
-          },
-          {
-            "type": "field_access",
-            "named": true
-          },
-          {
             "type": "nil",
             "named": true
           },
@@ -1000,7 +1014,7 @@
             "named": true
           },
           {
-            "type": "parenthesized_expression",
+            "type": "postfix_expression",
             "named": true
           },
           {
@@ -1026,6 +1040,10 @@
         },
         {
           "type": "const_declaration",
+          "named": true
+        },
+        {
+          "type": "function",
           "named": true
         },
         {
@@ -1123,6 +1141,42 @@
           "named": true
         }
       ]
+    }
+  },
+  {
+    "type": "subscript_accessor",
+    "named": true,
+    "fields": {
+      "index": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "binary_expression",
+            "named": true
+          },
+          {
+            "type": "boolean",
+            "named": true
+          },
+          {
+            "type": "nil",
+            "named": true
+          },
+          {
+            "type": "number",
+            "named": true
+          },
+          {
+            "type": "postfix_expression",
+            "named": true
+          },
+          {
+            "type": "string",
+            "named": true
+          }
+        ]
+      }
     }
   },
   {
@@ -1232,6 +1286,14 @@
     "named": false
   },
   {
+    "type": "[",
+    "named": false
+  },
+  {
+    "type": "]",
+    "named": false
+  },
+  {
     "type": "comment",
     "named": true,
     "extra": true
@@ -1262,6 +1324,10 @@
   },
   {
     "type": "false",
+    "named": false
+  },
+  {
+    "type": "fn",
     "named": false
   },
   {

@@ -20,6 +20,7 @@ pub fn parse(src: &str) -> Result<File> {
         match p.as_rule() {
             Rule::stylesheet => items.push(Item::Stylesheet(parse_stylesheet(p)?)),
             Rule::component => items.push(Item::Component(parse_component(p)?)),
+            Rule::function => items.push(Item::Function(parse_function(p)?)),
             Rule::const_decl => items.push(Item::Const(parse_const(p)?)),
             Rule::EOI => {}
             other => bail!("unexpected top-level rule: {:?}", other),
@@ -73,6 +74,23 @@ fn parse_component(p: Pair<Rule>) -> Result<Component> {
         }
     }
     Ok(Component { name, params, body })
+}
+
+fn parse_function(p: Pair<Rule>) -> Result<Function> {
+    let mut inner = p.into_inner();
+    let name = inner.next().unwrap().as_str().to_string();
+
+    let mut params = Vec::new();
+    let mut body = None;
+    for part in inner {
+        match part.as_rule() {
+            Rule::params => params = parse_params(part)?,
+            Rule::expr => body = Some(parse_expr(part)?),
+            other => bail!("unexpected in function: {:?}", other),
+        }
+    }
+    let body = body.ok_or_else(|| anyhow!("function {} has no body", name))?;
+    Ok(Function { name, params, body })
 }
 
 fn parse_params(p: Pair<Rule>) -> Result<Vec<Param>> {
@@ -285,8 +303,24 @@ fn parse_binop(s: &str) -> Result<BinOp> {
 
 fn parse_primary(p: Pair<Rule>) -> Result<Expr> {
     match p.as_rule() {
+        Rule::number => Ok(Expr::Number(p.as_str().parse()?)),
+        Rule::bool => Ok(Expr::Bool(p.as_str() == "true")),
+        Rule::nil => Ok(Expr::Nil),
+        Rule::string => Ok(Expr::Str(parse_string(p)?)),
+        Rule::postfix => parse_postfix(p),
+        Rule::expr => parse_expr(p),
+        other => bail!("unexpected primary: {:?}", other),
+    }
+}
+
+/// A base value (call / path / parenthesised expr) followed by any chain of
+/// `.field` and `["key"]` accessors, folded left to right into Field/Index.
+fn parse_postfix(p: Pair<Rule>) -> Result<Expr> {
+    let mut inner = p.into_inner();
+    let base = inner.next().unwrap();
+    let mut cur = match base.as_rule() {
         Rule::call => {
-            let mut i = p.into_inner();
+            let mut i = base.into_inner();
             let path = parse_path(i.next().unwrap());
             let mut args = Vec::new();
             for arg in i {
@@ -294,22 +328,29 @@ fn parse_primary(p: Pair<Rule>) -> Result<Expr> {
                     args.push(parse_arg(arg)?);
                 }
             }
-            Ok(Expr::Call(path, args))
+            Expr::Call(path, args)
         }
         Rule::field_access => {
-            let path_pair = p.into_inner().next().unwrap();
-            Ok(Expr::Path(parse_path(path_pair)))
+            let path_pair = base.into_inner().next().unwrap();
+            Expr::Path(parse_path(path_pair))
         }
-        Rule::path => Ok(Expr::Path(parse_path(p))),
-        Rule::number => Ok(Expr::Number(p.as_str().parse()?)),
-        Rule::bool => Ok(Expr::Bool(p.as_str() == "true")),
-        Rule::nil => Ok(Expr::Nil),
-        Rule::string => Ok(Expr::Str(parse_string(p)?)),
-        Rule::ident_expr => Ok(Expr::Path(vec![p.as_str().to_string()])),
-        Rule::paren => parse_expr(p.into_inner().next().unwrap()),
-        Rule::expr => parse_expr(p),
-        other => bail!("unexpected primary: {:?}", other),
+        Rule::paren => parse_expr(base.into_inner().next().unwrap())?,
+        other => bail!("unexpected postfix base: {:?}", other),
+    };
+    for acc in inner {
+        match acc.as_rule() {
+            Rule::field_suffix => {
+                let name = acc.into_inner().next().unwrap().as_str().to_string();
+                cur = Expr::Field(Box::new(cur), name);
+            }
+            Rule::index => {
+                let key = parse_expr(acc.into_inner().next().unwrap())?;
+                cur = Expr::Index(Box::new(cur), Box::new(key));
+            }
+            other => bail!("unexpected accessor: {:?}", other),
+        }
     }
+    Ok(cur)
 }
 
 fn parse_path(p: Pair<Rule>) -> Vec<String> {

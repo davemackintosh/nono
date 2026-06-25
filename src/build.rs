@@ -100,7 +100,7 @@ pub fn build(cfg: &BuildConfig) -> Result<BuildStats> {
             match &item {
                 Item::Component(c) => page_components.push(c.name.clone()),
                 Item::Stylesheet(s) => page_css.push_str(&render_css(s)),
-                Item::Const(_) => {}
+                Item::Function(_) | Item::Const(_) => {}
             }
             items.push(item);
         }
@@ -184,7 +184,7 @@ pub fn build(cfg: &BuildConfig) -> Result<BuildStats> {
                 match &item {
                     Item::Component(c) => layout_components.push(c.name.clone()),
                     Item::Stylesheet(s) => page_css.push_str(&render_css(s)),
-                    Item::Const(_) => {}
+                    Item::Function(_) | Item::Const(_) => {}
                 }
                 items.push(item);
             }

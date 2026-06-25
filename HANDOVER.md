@@ -37,8 +37,21 @@ Then we took the design somewhere new, on purpose:
 Both of the follow-ups that were on the table are now done: the nested-slot
 limitation is gone (a fill captures the slot context around it, so a layout can
 route its body through another component, e.g. `Post(...) { Slot() }`), and
-drafts now drop out of `glob` listings as well as output. There is also a
-tree-sitter grammar under `tree-sitter-nono/` for editor support.
+drafts now drop out of `glob` listings as well as output.
+
+Since then the language grew up a bit, all driven from the same place (build a
+real site with it, prove the joke has teeth):
+
+- **`fn name(p: type) = expr`**: value-returning functions, first class.
+- **A standard library** in `src/std.nono`: plain Nono compiled into the binary
+  and loaded into every project. `lastfm_recent` lives here now, not in the core.
+- **Generic builtins** `http_get` and `env` replaced the hardcoded
+  `lastfm.recent`. The core knows files, HTTP, JSON, and env, nothing service-
+  specific.
+- **Bracket indexing** `x["#text"]` for JSON keys that aren't identifiers.
+- **`nono dev`**: an HTTP server (port 6969) that rebuilds per request.
+- A **tree-sitter grammar** under `tree-sitter-nono/` for editor support, kept in
+  sync with all of the above.
 
 ## First actions, in order
 

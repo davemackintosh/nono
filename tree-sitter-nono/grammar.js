@@ -36,6 +36,7 @@ module.exports = grammar({
     _item: $ => choice(
       $.stylesheet,
       $.component,
+      $.function,
       $.const_declaration,
     ),
 
@@ -65,6 +66,15 @@ module.exports = grammar({
     parameters: $ => seq('(', commaSep($.parameter), ')'),
     parameter: $ => seq(field('name', $.identifier), ':', field('type', $.type)),
     type: $ => $.identifier,
+
+    // ---- function: `fn name(params) = expr` (returns a value, not markup) ----
+    function: $ => seq(
+      'fn',
+      field('name', $.identifier),
+      optional(field('parameters', $.parameters)),
+      '=',
+      field('body', $._expression),
+    ),
 
     // ---- block: the body of a component, slot fill, or control structure ----
     block: $ => seq('{', repeat($._node), '}'),
@@ -149,18 +159,26 @@ module.exports = grammar({
     binary_operator: _ => choice('==', '!=', '<=', '>=', '<', '>', '+', '-', '*', '/'),
 
     _primary: $ => choice(
-      $.call,
       $.number,
       $.boolean,
       $.nil,
       $.string,
-      $.field_access,
-      $.parenthesized_expression,
+      $.postfix_expression,
     ),
+
+    // A base value followed by any chain of `.field` and `["key"]` accessors,
+    // mirroring the pest grammar's `postfix = base ~ accessor*`.
+    postfix_expression: $ => seq(
+      field('base', choice($.call, $.field_access, $.parenthesized_expression)),
+      repeat($._accessor),
+    ),
+    _accessor: $ => choice($.member_accessor, $.subscript_accessor),
+    member_accessor: $ => seq('.', field('property', $.identifier)),
+    subscript_accessor: $ => seq('[', field('index', $._expression), ']'),
 
     parenthesized_expression: $ => seq('(', $._expression, ')'),
 
-    // `lastfm.recent(user = "x")`
+    // `http_get(url)`, `glob("...")`, or a user function `my_fn(x = 1)`
     call: $ => seq(field('function', $.path), '(', commaSep($.argument), ')'),
     field_access: $ => $.path,
     path: $ => prec.left(seq($.identifier, repeat(seq('.', $.identifier)))),

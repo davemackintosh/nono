@@ -1,0 +1,12 @@
+// The Nono standard library.
+//
+// Plain Nono, compiled into the binary and loaded into every project before
+// your own code. It is built entirely on the generic builtins (http_get, env,
+// glob, markdown), so the compiler core never has to know about any specific
+// service. Define a function of the same name in your project to shadow one.
+
+// Recent Last.fm scrobbles for a user. Reads the API key from NONO_LASTFM_KEY.
+// Returns the raw track list; in markup use `track.name`, and the artist name
+// lives at `track.artist["#text"]` (Last.fm's JSON, not our doing).
+fn lastfm_recent(user: string, limit: number) =
+  http_get("https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user={user}&api_key={env("NONO_LASTFM_KEY")}&format=json&limit={limit}").recenttracks.track

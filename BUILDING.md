@@ -27,10 +27,16 @@ cargo run -- build examples/blog --out /tmp/blog-out
 ```
 
 To build without a key while poking at the rest, swap the
-`const recent_tracks = lastfm.recent(...)` line in
+`const recent_tracks = lastfm_recent(...)` line in
 `examples/blog/pages/index.nono` for an empty list, e.g.
 `const recent_tracks = glob("no/such/dir/*.md")`. Everything else builds fine,
 the "Listening to" sidebar just comes out empty.
+
+`lastfm_recent` is not a builtin: it is a standard-library function in
+`src/std.nono` (compiled into the binary, loaded into every project), written on
+the generic builtins `http_get` and `env`. Define your own with
+`fn name(p: type) = expr`, and reach awkward JSON keys with bracket indexing,
+`track.artist["#text"]`.
 
 ## Live preview
 

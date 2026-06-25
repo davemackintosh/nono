@@ -40,6 +40,7 @@
 ; ---- keywords ----
 [
   "component"
+  "fn"
   "const"
   "stylesheet"
 ] @keyword
@@ -61,9 +62,13 @@
 ; A data-source / function call: `glob(...)`, `lastfm.recent(...)`.
 (call function: (path (identifier) @function))
 
-; Component definitions and element / component invocations.
+; Component and function definitions, element / component invocations.
 (component name: (identifier) @type)
+(function name: (identifier) @function)
 (element name: (identifier) @function.method)
+
+; A `.field` accessor reads as a property.
+(member_accessor property: (identifier) @property)
 
 ; Parameters and types.
 (parameter name: (identifier) @variable.parameter)

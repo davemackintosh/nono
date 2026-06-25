@@ -13,6 +13,7 @@ pub struct File {
 pub enum Item {
     Stylesheet(Stylesheet),
     Component(Component),
+    Function(Function),
     Const(ConstDecl),
 }
 
@@ -38,6 +39,15 @@ pub struct Component {
     pub name: String,
     pub params: Vec<Param>,
     pub body: Vec<Node>,
+}
+
+/// A value-returning function: `fn name(params) = expr`. Unlike a component, its
+/// body is a single expression and it yields a `Value`, not markup.
+#[derive(Debug, Clone)]
+pub struct Function {
+    pub name: String,
+    pub params: Vec<Param>,
+    pub body: Expr,
 }
 
 #[derive(Debug, Clone)]
@@ -142,8 +152,12 @@ pub enum Expr {
     Str(StrTemplate),
     /// A dotted path used as a value: `track.artist`, `posts`.
     Path(Vec<String>),
-    /// A call: `lastfm.recent(user = "dave")`, `glob("...")`.
+    /// A call: `http_get("...")`, `glob("...")`, or a user function `my_fn(x = 1)`.
     Call(Vec<String>, Vec<Arg>),
+    /// A `.field` accessor applied to any expression: `http_get(url).recenttracks`.
+    Field(Box<Expr>, String),
+    /// A `["key"]` (or `[index]`) accessor: `track.artist["#text"]`, `xs[0]`.
+    Index(Box<Expr>, Box<Expr>),
     Binary(Box<Expr>, BinOp, Box<Expr>),
 }
 
