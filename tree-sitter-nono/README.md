@@ -44,8 +44,26 @@ this is the one place the two grammars disagree, and also you should not.
 
 ## Editor setup
 
-`queries/highlights.scm` provides syntax highlighting. For Neovim with
-nvim-treesitter, point a custom parser config at this directory and drop the
-query in your runtime path; for Helix, add a `[[language]]` entry with
-`name = "nono"` and `grammar = "nono"`. The `tree-sitter.json` here declares the
-`source.nono` scope and the `.nono` file type.
+`queries/highlights.scm` provides syntax highlighting.
+
+**Neovim:** source `neovim.lua`, which needs nothing else (not even
+nvim-treesitter). It compiles the committed parser, loads it through Neovim's
+built-in tree-sitter, registers the highlight query, and associates the `.nono`
+filetype:
+
+```vim
+:source /path/to/tree-sitter-nono/neovim.lua
+```
+
+or from `init.lua`:
+
+```lua
+dofile(vim.fn.expand("~/path/to/tree-sitter-nono/neovim.lua"))
+```
+
+It rebuilds `nono.so` only when `src/parser.c` changes, so it is cheap to source
+on every startup. You need a C compiler (`cc`, `clang`, or `gcc`) on PATH.
+
+**Helix and others:** add a `[[language]]` entry with `name = "nono"` and
+`grammar = "nono"`; the `tree-sitter.json` here declares the `source.nono` scope
+and the `.nono` file type.
