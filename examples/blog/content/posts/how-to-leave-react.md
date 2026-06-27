@@ -6,4 +6,23 @@ kind: Essay
 
 After eleven years, I am tired. Here is what I did instead.
 
-It turns out a blog is just *documents*.
+## The realisation
+
+It turns out a blog is just *documents*. No reconciler required.
+
+## The plan
+
+A short, smug list of steps.
+
+### Step one: delete node_modules
+
+It felt wonderful. Forty thousand files, gone.
+
+### Step two: write some HTML
+
+By hand, like an animal. It was fine, actually.
+
+## The result
+
+This very page, built by a spite-driven compiler, with the table of
+contents above generated from these headings.

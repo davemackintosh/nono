@@ -10,3 +10,23 @@
 // lives at `track.artist["#text"]` (Last.fm's JSON, not our doing).
 fn lastfm_recent(user: string, limit: number) =
   http_get("https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user={user}&api_key={env("NONO_LASTFM_KEY")}&format=json&limit={limit}").recenttracks.track
+
+// A table of contents for a markdown page. Every markdown value carries a
+// `headings` list ({level, text, id}), with a matching `id` anchor on each
+// heading in the rendered body, so:
+//
+//   TableOfContents(headings = post.headings)
+//
+// renders a nav of links that jump to those headings. Each item gets a
+// `toc-h{level}` class (toc-h1, toc-h2, ...) so you can indent by depth in CSS.
+component TableOfContents(headings: list) {
+  nav(class = "toc") {
+    ul {
+      for h in headings {
+        li(class = "toc-h{h.level}") {
+          a(href = "#{h.id}") { "{h.text}" }
+        }
+      }
+    }
+  }
+}

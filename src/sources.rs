@@ -37,17 +37,23 @@ fn parse_markdown_str(raw: &str, rel: &str) -> Result<Value> {
         }
     }
 
-    // Render markdown body to HTML.
-    use pulldown_cmark::{html, Options, Parser as MdParser};
+    // Render the body to HTML, pulling a table of contents out as we go. We
+    // collect the parser events, give every heading a unique slug id (mutating
+    // the event so the emitted HTML carries `id="..."`) and record its
+    // {level, text, id}, then serialise. The body's anchors and the TOC's links
+    // come from the same slugs, so they can never drift apart.
+    use pulldown_cmark::{html, Event, Options, Parser as MdParser};
     let mut opts = Options::empty();
     opts.insert(Options::ENABLE_STRIKETHROUGH);
     opts.insert(Options::ENABLE_TABLES);
     opts.insert(Options::ENABLE_FOOTNOTES);
-    let parser = MdParser::new_ext(body, opts);
+    let mut events: Vec<Event> = MdParser::new_ext(body, opts).collect();
+    let headings = extract_headings(&mut events);
     let mut html_out = String::new();
-    html::push_html(&mut html_out, parser);
+    html::push_html(&mut html_out, events.into_iter());
 
     map.insert("html".into(), Value::Str(html_out));
+    map.insert("headings".into(), Value::List(headings));
     map.insert("path".into(), Value::Str(rel.to_string()));
     map.insert("slug".into(), Value::Str(slug_of(rel)));
 
@@ -57,6 +63,94 @@ fn parse_markdown_str(raw: &str, rel: &str) -> Result<Value> {
     map.entry("draft".into()).or_insert(Value::Bool(false));
 
     Ok(Value::Map(map))
+}
+
+/// Walk the parsed events, give every heading a unique slug `id` (mutating the
+/// heading event in place so `html::push_html` emits `id="..."`), and return the
+/// table of contents as a List of Maps with `level`, `text` and `id`. The body
+/// anchors and the TOC links are both built from these ids, so they always agree.
+fn extract_headings(events: &mut [pulldown_cmark::Event]) -> Vec<Value> {
+    use pulldown_cmark::{Event, Tag, TagEnd};
+
+    let mut toc = Vec::new();
+    // Slug -> times seen, so repeated heading text gets `-1`, `-2`, ... suffixes
+    // and every id stays unique within the document.
+    let mut seen: std::collections::BTreeMap<String, usize> = std::collections::BTreeMap::new();
+
+    let mut i = 0;
+    while i < events.len() {
+        let level = match &events[i] {
+            Event::Start(Tag::Heading { level, .. }) => *level as usize,
+            _ => {
+                i += 1;
+                continue;
+            }
+        };
+
+        // Concatenate the text (and inline code) between here and the matching
+        // heading end; that's the visible heading label.
+        let mut text = String::new();
+        let mut j = i + 1;
+        while j < events.len() {
+            match &events[j] {
+                Event::Text(t) | Event::Code(t) => text.push_str(t),
+                Event::End(TagEnd::Heading(_)) => break,
+                _ => {}
+            }
+            j += 1;
+        }
+
+        let id = unique_slug(&text, &mut seen);
+        if let Event::Start(Tag::Heading { id: hid, .. }) = &mut events[i] {
+            *hid = Some(id.clone().into());
+        }
+
+        let mut m = BTreeMap::new();
+        m.insert("level".into(), Value::Number(level as f64));
+        m.insert("text".into(), Value::Str(text));
+        m.insert("id".into(), Value::Str(id));
+        toc.push(Value::Map(m));
+
+        i = j + 1;
+    }
+
+    toc
+}
+
+/// A GitHub-ish heading slug: lowercase, runs of non-alphanumerics become a
+/// single dash, leading/trailing dashes trimmed. Empty text falls back to
+/// `section` so an id is always produced.
+fn slugify(text: &str) -> String {
+    let mut s = String::new();
+    let mut prev_dash = false;
+    for c in text.chars() {
+        if c.is_alphanumeric() {
+            s.extend(c.to_lowercase());
+            prev_dash = false;
+        } else if !prev_dash {
+            s.push('-');
+            prev_dash = true;
+        }
+    }
+    let trimmed = s.trim_matches('-');
+    if trimmed.is_empty() {
+        "section".to_string()
+    } else {
+        trimmed.to_string()
+    }
+}
+
+/// Slugify, then disambiguate against ids already handed out in this document.
+fn unique_slug(text: &str, seen: &mut std::collections::BTreeMap<String, usize>) -> String {
+    let base = slugify(text);
+    let n = seen.entry(base.clone()).or_insert(0);
+    let id = if *n == 0 {
+        base.clone()
+    } else {
+        format!("{}-{}", base, n)
+    };
+    *n += 1;
+    id
 }
 
 fn slug_of(rel: &str) -> String {

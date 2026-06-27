@@ -78,7 +78,14 @@ component IndexPage {
   returns markup). The core ships no service-specific builtin: `lastfm_recent`
   is a `fn` in the standard library (`src/std.nono`), built on `http_get` and
   `env`. Bracket indexing, `track.artist["#text"]`, reaches JSON keys that aren't
-  valid identifiers.
+  valid identifiers. The standard library carries components too: `TableOfContents`
+  takes the `headings` that every markdown page provides and renders a nav of
+  anchor links.
+- **Every markdown page comes with a table of contents.** A `.md` value carries
+  a `headings` list of `{level, text, id}`, and each heading in the rendered body
+  gets a matching slug `id` (deduplicated, GitHub-style). The anchors and the TOC
+  links are built from the same slugs, so they cannot drift. Drop
+  `TableOfContents(headings = headings)` into a layout and it just works.
 - **The filesystem is the router, and it routes two things.** A `.nono` under
   `pages/` is a page that happens to be a component: `pages/about.nono` →
   `about/index.html` (vanity URLs), `pages/index.nono` → `index.html`. A `.md`

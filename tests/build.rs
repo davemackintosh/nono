@@ -137,6 +137,40 @@ fn bracket_indexing_reads_map_and_list() {
 }
 
 #[test]
+fn markdown_headings_drive_a_table_of_contents() {
+    let root = scratch("toc");
+    let proj = root.join("project");
+    let out = root.join("out");
+    write(&proj, "pages/index.nono", r#"component Home { main { "home" } }"#);
+    // The layout pulls the free `headings` list and hands it to the stdlib
+    // TableOfContents component.
+    write(
+        &proj,
+        "layouts/posts.nono",
+        "component L(headings: list) { article { TableOfContents(headings = headings) Slot() } }",
+    );
+    write(
+        &proj,
+        "content/posts/guide.md",
+        "---\ntitle: Guide\n---\n## First Section\nbody\n## First Section\nagain\n### Nested Bit\nmore\n",
+    );
+
+    build(&BuildConfig { project: proj, out: out.clone() }).expect("build failed");
+
+    let page = fs::read_to_string(out.join("posts/guide/index.html")).expect("post page missing");
+    // Body headings carry slug ids.
+    assert!(page.contains(r#"<h2 id="first-section">First Section</h2>"#), "got: {page}");
+    assert!(page.contains(r#"<h3 id="nested-bit">Nested Bit</h3>"#), "got: {page}");
+    // Duplicate heading text gets a unique id.
+    assert!(page.contains(r#"<h2 id="first-section-1">First Section</h2>"#), "got: {page}");
+    // The TOC links to those same ids, with a depth class per level.
+    assert!(page.contains(r#"<nav class="toc">"#), "got: {page}");
+    assert!(page.contains(r##"<li class="toc-h2"><a href="#first-section">First Section</a></li>"##), "got: {page}");
+    assert!(page.contains(r##"<li class="toc-h2"><a href="#first-section-1">First Section</a></li>"##), "got: {page}");
+    assert!(page.contains(r##"<li class="toc-h3"><a href="#nested-bit">Nested Bit</a></li>"##), "got: {page}");
+}
+
+#[test]
 fn page_with_two_components_is_rejected() {
     let root = scratch("two_components");
     let proj = root.join("project");
