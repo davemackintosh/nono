@@ -1,21 +1,27 @@
-// The index page. Exercises: data sources, named + default slots,
-// for-loops over both a network source and a glob, match on post.kind,
-// string interpolation, and bracket indexing into raw JSON.
+// The index page. Exercises: data sources, named + default slots, a for-loop
+// over a glob, match on post.kind, and string interpolation.
+//
+// It builds with zero setup. The sidebar shows off the Last.fm standard-library
+// function but keeps it switched off so a fresh `nono new` site builds without
+// an API key. To turn it on:
+//   1. export NONO_LASTFM_KEY=your-key
+//   2. uncomment the `recent_tracks` const and the `for track` loop below.
 //
 // `lastfm_recent` is not a builtin: it's a standard-library function (see
 // src/std.nono) written on top of the generic `http_get` and `env`. It returns
 // Last.fm's raw track JSON, where the artist name hides at artist["#text"].
 
-const recent_tracks = lastfm_recent(user = "davemackintosh", limit = 10)
+// const recent_tracks = lastfm_recent(user = "davemackintosh", limit = 10)
 const posts = glob("content/posts/*.md")
 
 component IndexPage {
   Layout(heading = "New World Code") {
     sidebar = {
       Heading(2) { "Listening to" }
-      for track in recent_tracks {
-        Prose { "{track.artist["#text"]} - {track.name}" }
-      }
+      Prose { "Nothing right now. Wire up Last.fm in pages/index.nono." }
+      // for track in recent_tracks {
+      //   Prose { "{track.artist["#text"]} - {track.name}" }
+      // }
     }
 
     // default block: the posts list
