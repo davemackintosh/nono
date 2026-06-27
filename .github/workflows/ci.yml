@@ -1,0 +1,61 @@
+name: CI
+
+# Build it, test it, and prove the examples still compile to HTML, including the
+# should-fail cases that are supposed to fail loudly. Formatting is checked too,
+# so the tree stays `cargo fmt` clean.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-test-examples:
+    name: build, test, examples
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache cargo + target
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Formatting
+        run: cargo fmt --check
+
+      - name: Build
+        run: cargo build --locked --verbose
+
+      - name: Test
+        run: cargo test --locked --verbose
+
+      - name: Build the example sites
+        # The blog template is key-free now, so neither of these needs a secret.
+        run: |
+          cargo run --locked -- build examples/blog --out /tmp/blog-out
+          cargo run --locked -- build examples/torture --out /tmp/torture-out
+
+      - name: Scaffold a fresh project and build it
+        run: |
+          cargo run --locked -- new --path /tmp/scaffold
+          cargo run --locked -- build /tmp/scaffold --out /tmp/scaffold-out
+
+      - name: The should-fail cases must fail loudly
+        run: |
+          for d in examples/should-fail/*/; do
+            if cargo run --locked -- build "$d" --out /tmp/should-fail-out >/dev/null 2>&1; then
+              echo "::error::$d built successfully, but it is supposed to fail"
+              exit 1
+            fi
+            echo "ok: $d failed as expected"
+          done
