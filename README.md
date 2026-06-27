@@ -158,10 +158,16 @@ show up in `glob` listings either, so half-finished thoughts can sit in
 
 ```sh
 cargo build --release
+./target/release/nono new   --path path/to/new-site  # scaffold from the blog template
 ./target/release/nono build path/to/your-site --out path/to/output
 ./target/release/nono dev   path/to/your-site   # serve on http://127.0.0.1:6969
 ./target/release/nono parse path/to/file.nono   # dump the AST (debugging)
 ```
+
+`nono new` copies the blog template (the same thing that lives under
+`examples/blog`, baked into the binary) into a fresh directory. It refuses to
+write into anything that already has files in it, so you can't point it at your
+real site and lose everything.
 
 `nono dev` rebuilds the whole site on every request, so you edit a file, hit
 refresh, and see it. A build error renders in the browser instead of taking the

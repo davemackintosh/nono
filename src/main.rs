@@ -5,7 +5,7 @@
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
-use nono::{build, parser, serve};
+use nono::{build, parser, scaffold, serve};
 use std::path::PathBuf;
 
 #[derive(Parser)]
@@ -25,6 +25,12 @@ enum Command {
         /// Output directory.
         #[arg(short, long, default_value = "out")]
         out: PathBuf,
+    },
+    /// Scaffold a new project from the blog template.
+    New {
+        /// Where to write the new project. Must be empty or not yet exist.
+        #[arg(short, long)]
+        path: PathBuf,
     },
     /// Parse a single .nono file and print its AST (debugging).
     Parse {
@@ -55,6 +61,15 @@ fn main() -> Result<()> {
                 stats.nono_pages,
                 stats.content_pages,
                 stats.nono_pages + stats.content_pages
+            );
+        }
+        Command::New { path } => {
+            let files = scaffold::new_project(&path)?;
+            println!(
+                "scaffolded {} files into {}. `cd {}` then `nono dev`.",
+                files,
+                path.display(),
+                path.display()
             );
         }
         Command::Parse { file } => {

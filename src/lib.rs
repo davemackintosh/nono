@@ -8,6 +8,7 @@ pub mod build;
 pub mod eval;
 pub mod html;
 pub mod parser;
+pub mod scaffold;
 pub mod serve;
 pub mod sources;
 pub mod value;
