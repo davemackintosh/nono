@@ -29,8 +29,7 @@ pub fn serve(project: PathBuf, out: PathBuf, port: u16) -> Result<()> {
     }
 
     let addr = format!("127.0.0.1:{port}");
-    let listener =
-        TcpListener::bind(&addr).with_context(|| format!("binding {addr}"))?;
+    let listener = TcpListener::bind(&addr).with_context(|| format!("binding {addr}"))?;
 
     println!("nono dev: serving {} on http://{}", project.display(), addr);
     println!("rebuilds on every request. ctrl-c when you have had enough.");
@@ -197,5 +196,7 @@ fn not_found_page(target: &str) -> String {
 }
 
 fn escape(s: &str) -> String {
-    s.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
 }

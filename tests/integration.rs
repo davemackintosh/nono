@@ -176,7 +176,10 @@ fn arithmetic_in_interpolation() {
     // This test documents the CURRENT behaviour so a future precedence fix is
     // a deliberate, visible change.
     let html = render(src, "P");
-    assert!(html == "<div>9</div>" || html == "<div>7</div>", "got: {html}");
+    assert!(
+        html == "<div>9</div>" || html == "<div>7</div>",
+        "got: {html}"
+    );
 }
 
 #[test]

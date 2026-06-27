@@ -26,7 +26,11 @@ fn md_file_becomes_a_page() {
     let root = scratch("md_page");
     let proj = root.join("project");
     let out = root.join("out");
-    write(&proj, "pages/index.nono", r#"component Home { main { "home" } }"#);
+    write(
+        &proj,
+        "pages/index.nono",
+        r#"component Home { main { "home" } }"#,
+    );
     write(
         &proj,
         "layouts/posts.nono",
@@ -38,7 +42,11 @@ fn md_file_becomes_a_page() {
         "---\ntitle: Hello There\n---\nBody *text*.\n",
     );
 
-    build(&BuildConfig { project: proj, out: out.clone() }).expect("build failed");
+    build(&BuildConfig {
+        project: proj,
+        out: out.clone(),
+    })
+    .expect("build failed");
 
     // Vanity URL: content/posts/hello.md -> posts/hello/index.html.
     let page = fs::read_to_string(out.join("posts/hello/index.html")).expect("post page missing");
@@ -53,15 +61,27 @@ fn draft_md_is_not_published() {
     let root = scratch("draft");
     let proj = root.join("project");
     let out = root.join("out");
-    write(&proj, "pages/index.nono", r#"component Home { main { "home" } }"#);
-    write(&proj, "layouts/posts.nono", "component L { article { Slot() } }");
+    write(
+        &proj,
+        "pages/index.nono",
+        r#"component Home { main { "home" } }"#,
+    );
+    write(
+        &proj,
+        "layouts/posts.nono",
+        "component L { article { Slot() } }",
+    );
     write(
         &proj,
         "content/posts/secret.md",
         "---\ntitle: Secret\ndraft: true\n---\nshh\n",
     );
 
-    build(&BuildConfig { project: proj, out: out.clone() }).expect("build failed");
+    build(&BuildConfig {
+        project: proj,
+        out: out.clone(),
+    })
+    .expect("build failed");
 
     assert!(
         !out.join("posts/secret/index.html").exists(),
@@ -76,7 +96,11 @@ fn explicit_layout_field_wins() {
     let root = scratch("explicit_layout");
     let proj = root.join("project");
     let out = root.join("out");
-    write(&proj, "pages/index.nono", r#"component Home { main { "h" } }"#);
+    write(
+        &proj,
+        "pages/index.nono",
+        r#"component Home { main { "h" } }"#,
+    );
     write(
         &proj,
         "layouts/fancy.nono",
@@ -84,7 +108,11 @@ fn explicit_layout_field_wins() {
     );
     write(&proj, "content/notes/n.md", "---\nlayout: fancy\n---\nhi\n");
 
-    build(&BuildConfig { project: proj, out: out.clone() }).expect("build failed");
+    build(&BuildConfig {
+        project: proj,
+        out: out.clone(),
+    })
+    .expect("build failed");
 
     let page = fs::read_to_string(out.join("notes/n/index.html")).expect("page missing");
     assert!(page.contains(r#"<section class="fancy">"#), "got: {page}");
@@ -96,13 +124,20 @@ fn missing_layout_is_a_loud_error() {
     let root = scratch("missing_layout");
     let proj = root.join("project");
     let out = root.join("out");
-    write(&proj, "pages/index.nono", r#"component Home { main { "home" } }"#);
+    write(
+        &proj,
+        "pages/index.nono",
+        r#"component Home { main { "home" } }"#,
+    );
     write(&proj, "content/posts/x.md", "---\ntitle: X\n---\nbody\n");
 
     let err = build(&BuildConfig { project: proj, out })
         .expect_err("build should fail with no layout")
         .to_string();
-    assert!(err.contains("layout") && err.contains("posts"), "got: {err}");
+    assert!(
+        err.contains("layout") && err.contains("posts"),
+        "got: {err}"
+    );
 }
 
 #[test]
@@ -113,8 +148,16 @@ fn bracket_indexing_reads_map_and_list() {
     let root = scratch("indexing");
     let proj = root.join("project");
     let out = root.join("out");
-    write(&proj, "content/posts/p.md", "---\ntitle: Hello\n---\nbody\n");
-    write(&proj, "layouts/posts.nono", "component L(title: string) { article { Slot() } }");
+    write(
+        &proj,
+        "content/posts/p.md",
+        "---\ntitle: Hello\n---\nbody\n",
+    );
+    write(
+        &proj,
+        "layouts/posts.nono",
+        "component L(title: string) { article { Slot() } }",
+    );
     write(
         &proj,
         "pages/index.nono",
@@ -129,10 +172,17 @@ fn bracket_indexing_reads_map_and_list() {
         "#,
     );
 
-    build(&BuildConfig { project: proj, out: out.clone() }).expect("build failed");
+    build(&BuildConfig {
+        project: proj,
+        out: out.clone(),
+    })
+    .expect("build failed");
 
     let page = fs::read_to_string(out.join("index.html")).expect("index missing");
-    assert!(page.contains("<span>Hello</span>"), "string key on map: {page}");
+    assert!(
+        page.contains("<span>Hello</span>"),
+        "string key on map: {page}"
+    );
     assert!(page.contains("<p>Hello</p>"), "list index then key: {page}");
 }
 
@@ -141,7 +191,11 @@ fn markdown_headings_drive_a_table_of_contents() {
     let root = scratch("toc");
     let proj = root.join("project");
     let out = root.join("out");
-    write(&proj, "pages/index.nono", r#"component Home { main { "home" } }"#);
+    write(
+        &proj,
+        "pages/index.nono",
+        r#"component Home { main { "home" } }"#,
+    );
     // The layout pulls the free `headings` list and hands it to the stdlib
     // TableOfContents component.
     write(
@@ -155,19 +209,41 @@ fn markdown_headings_drive_a_table_of_contents() {
         "---\ntitle: Guide\n---\n## First Section\nbody\n## First Section\nagain\n### Nested Bit\nmore\n",
     );
 
-    build(&BuildConfig { project: proj, out: out.clone() }).expect("build failed");
+    build(&BuildConfig {
+        project: proj,
+        out: out.clone(),
+    })
+    .expect("build failed");
 
     let page = fs::read_to_string(out.join("posts/guide/index.html")).expect("post page missing");
     // Body headings carry slug ids.
-    assert!(page.contains(r#"<h2 id="first-section">First Section</h2>"#), "got: {page}");
-    assert!(page.contains(r#"<h3 id="nested-bit">Nested Bit</h3>"#), "got: {page}");
+    assert!(
+        page.contains(r#"<h2 id="first-section">First Section</h2>"#),
+        "got: {page}"
+    );
+    assert!(
+        page.contains(r#"<h3 id="nested-bit">Nested Bit</h3>"#),
+        "got: {page}"
+    );
     // Duplicate heading text gets a unique id.
-    assert!(page.contains(r#"<h2 id="first-section-1">First Section</h2>"#), "got: {page}");
+    assert!(
+        page.contains(r#"<h2 id="first-section-1">First Section</h2>"#),
+        "got: {page}"
+    );
     // The TOC links to those same ids, with a depth class per level.
     assert!(page.contains(r#"<nav class="toc">"#), "got: {page}");
-    assert!(page.contains(r##"<li class="toc-h2"><a href="#first-section">First Section</a></li>"##), "got: {page}");
-    assert!(page.contains(r##"<li class="toc-h2"><a href="#first-section-1">First Section</a></li>"##), "got: {page}");
-    assert!(page.contains(r##"<li class="toc-h3"><a href="#nested-bit">Nested Bit</a></li>"##), "got: {page}");
+    assert!(
+        page.contains(r##"<li class="toc-h2"><a href="#first-section">First Section</a></li>"##),
+        "got: {page}"
+    );
+    assert!(
+        page.contains(r##"<li class="toc-h2"><a href="#first-section-1">First Section</a></li>"##),
+        "got: {page}"
+    );
+    assert!(
+        page.contains(r##"<li class="toc-h3"><a href="#nested-bit">Nested Bit</a></li>"##),
+        "got: {page}"
+    );
 }
 
 #[test]

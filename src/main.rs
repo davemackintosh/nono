@@ -33,9 +33,7 @@ enum Command {
         path: PathBuf,
     },
     /// Parse a single .nono file and print its AST (debugging).
-    Parse {
-        file: PathBuf,
-    },
+    Parse { file: PathBuf },
     /// Build and serve the site over HTTP, rebuilding on every request.
     Dev {
         /// Project directory (contains pages/, lib/, content/).

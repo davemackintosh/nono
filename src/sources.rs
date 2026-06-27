@@ -213,8 +213,14 @@ pub fn glob(root: &Path, pattern: &str) -> Result<Value> {
     out.retain(|v| !matches!(v.get_field("draft"), Some(Value::Bool(true))));
     // Sort by date descending if present, else by slug.
     out.sort_by(|a, b| {
-        let da = a.get_field("date").map(|v| v.to_string()).unwrap_or_default();
-        let db = b.get_field("date").map(|v| v.to_string()).unwrap_or_default();
+        let da = a
+            .get_field("date")
+            .map(|v| v.to_string())
+            .unwrap_or_default();
+        let db = b
+            .get_field("date")
+            .map(|v| v.to_string())
+            .unwrap_or_default();
         db.cmp(&da)
     });
     Ok(Value::List(out))
@@ -256,7 +262,10 @@ fn glob_paths(root: &Path, pattern: &str) -> Result<Vec<String>> {
             let entry = entry?;
             let name = entry.file_name();
             let name = name.to_string_lossy();
-            if name.starts_with(prefix) && name.ends_with(suffix) && name.len() >= prefix.len() + suffix.len() {
+            if name.starts_with(prefix)
+                && name.ends_with(suffix)
+                && name.len() >= prefix.len() + suffix.len()
+            {
                 let rel = if dir.as_os_str().is_empty() {
                     name.to_string()
                 } else {
@@ -303,9 +312,7 @@ fn json_to_value(j: serde_json::Value) -> Value {
         serde_json::Value::Bool(b) => Value::Bool(b),
         serde_json::Value::Number(n) => Value::Number(n.as_f64().unwrap_or(0.0)),
         serde_json::Value::String(s) => Value::Str(s),
-        serde_json::Value::Array(a) => {
-            Value::List(a.into_iter().map(json_to_value).collect())
-        }
+        serde_json::Value::Array(a) => Value::List(a.into_iter().map(json_to_value).collect()),
         serde_json::Value::Object(o) => {
             let mut map = BTreeMap::new();
             for (k, v) in o {

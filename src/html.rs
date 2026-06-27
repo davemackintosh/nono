@@ -24,8 +24,20 @@ pub enum Html {
 fn is_void(tag: &str) -> bool {
     matches!(
         tag,
-        "area" | "base" | "br" | "col" | "embed" | "hr" | "img" | "input"
-            | "link" | "meta" | "param" | "source" | "track" | "wbr"
+        "area"
+            | "base"
+            | "br"
+            | "col"
+            | "embed"
+            | "hr"
+            | "img"
+            | "input"
+            | "link"
+            | "meta"
+            | "param"
+            | "source"
+            | "track"
+            | "wbr"
     )
 }
 
@@ -33,12 +45,55 @@ fn is_void(tag: &str) -> bool {
 /// names are components and never reach serialisation.
 pub fn known_html_tags() -> BTreeSet<&'static str> {
     [
-        "html", "head", "body", "title", "meta", "link", "style", "script",
-        "div", "span", "p", "a", "img", "ul", "ol", "li", "nav", "header",
-        "footer", "main", "article", "section", "aside", "h1", "h2", "h3",
-        "h4", "h5", "h6", "time", "br", "hr", "em", "strong", "code", "pre",
-        "blockquote", "figure", "figcaption", "table", "thead", "tbody", "tr",
-        "td", "th", "small", "button", "label", "input",
+        "html",
+        "head",
+        "body",
+        "title",
+        "meta",
+        "link",
+        "style",
+        "script",
+        "div",
+        "span",
+        "p",
+        "a",
+        "img",
+        "ul",
+        "ol",
+        "li",
+        "nav",
+        "header",
+        "footer",
+        "main",
+        "article",
+        "section",
+        "aside",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "time",
+        "br",
+        "hr",
+        "em",
+        "strong",
+        "code",
+        "pre",
+        "blockquote",
+        "figure",
+        "figcaption",
+        "table",
+        "thead",
+        "tbody",
+        "tr",
+        "td",
+        "th",
+        "small",
+        "button",
+        "label",
+        "input",
     ]
     .into_iter()
     .collect()
@@ -56,7 +111,11 @@ fn render_node(node: &Html, out: &mut String) {
     match node {
         Html::Text(t) => escape_into(t, out),
         Html::Raw(r) => out.push_str(r),
-        Html::Element { tag, attrs, children } => {
+        Html::Element {
+            tag,
+            attrs,
+            children,
+        } => {
             out.push('<');
             out.push_str(tag);
             for (k, v) in attrs {

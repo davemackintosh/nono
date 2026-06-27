@@ -228,8 +228,8 @@ impl Evaluator {
         let scrutinee = self.eval_expr(&m.scrutinee, env)?;
         let tag = scrutinee.tag();
         for arm in &m.arms {
-            let matches = arm.pattern.tag == "_"
-                || tag.as_deref() == Some(arm.pattern.tag.as_str());
+            let matches =
+                arm.pattern.tag == "_" || tag.as_deref() == Some(arm.pattern.tag.as_str());
             if matches {
                 let mut scope = env.clone();
                 if let Some(binding) = &arm.pattern.binding {
@@ -308,13 +308,19 @@ impl Evaluator {
                     attrs.push((name.clone(), v.to_string()));
                 }
                 Arg::Named(_, ArgValue::Block(_)) => {
-                    bail!("HTML element <{}> cannot take a block-valued attribute", lname)
+                    bail!(
+                        "HTML element <{}> cannot take a block-valued attribute",
+                        lname
+                    )
                 }
                 Arg::Positional(e) => {
                     // A positional arg on a raw element: treat as text child later.
                     // We disallow to keep things predictable.
                     let _ = e;
-                    bail!("HTML element <{}> does not take positional arguments", lname)
+                    bail!(
+                        "HTML element <{}> does not take positional arguments",
+                        lname
+                    )
                 }
             }
         }
@@ -364,7 +370,11 @@ impl Evaluator {
             } else if let Some(e) = pos_iter.next() {
                 scope.insert(param.name.clone(), self.eval_expr(e, env)?);
             } else {
-                bail!("missing argument `{}` for component {}", param.name, comp.name);
+                bail!(
+                    "missing argument `{}` for component {}",
+                    param.name,
+                    comp.name
+                );
             }
         }
 
@@ -543,7 +553,11 @@ impl Evaluator {
             } else if let Some(e) = pos_iter.next() {
                 scope.insert(param.name.clone(), self.eval_expr(e, env)?);
             } else {
-                bail!("missing argument `{}` for function {}", param.name, func.name);
+                bail!(
+                    "missing argument `{}` for function {}",
+                    param.name,
+                    func.name
+                );
             }
         }
 

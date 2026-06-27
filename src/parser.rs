@@ -11,8 +11,8 @@ use pest_derive::Parser;
 struct NonoParser;
 
 pub fn parse(src: &str) -> Result<File> {
-    let mut pairs = NonoParser::parse(Rule::file, src)
-        .map_err(|e| anyhow!("parse error:\n{}", e))?;
+    let mut pairs =
+        NonoParser::parse(Rule::file, src).map_err(|e| anyhow!("parse error:\n{}", e))?;
     let file_pair = pairs.next().ok_or_else(|| anyhow!("empty parse"))?;
 
     let mut items = Vec::new();
@@ -147,7 +147,11 @@ fn parse_for(p: Pair<Rule>) -> Result<Node> {
     let binding = i.next().unwrap().as_str().to_string();
     let iter = parse_expr(i.next().unwrap())?;
     let body = parse_block(i.next().unwrap())?;
-    Ok(Node::For(ForNode { binding, iter, body }))
+    Ok(Node::For(ForNode {
+        binding,
+        iter,
+        body,
+    }))
 }
 
 fn parse_if(p: Pair<Rule>) -> Result<Node> {
@@ -165,7 +169,11 @@ fn parse_if(p: Pair<Rule>) -> Result<Node> {
         }
         None => None,
     };
-    Ok(Node::If(IfNode { cond, then, otherwise }))
+    Ok(Node::If(IfNode {
+        cond,
+        then,
+        otherwise,
+    }))
 }
 
 fn parse_match(p: Pair<Rule>) -> Result<Node> {
@@ -235,7 +243,11 @@ fn parse_element(p: Pair<Rule>) -> Result<Node> {
             other => bail!("unexpected in element: {:?}", other),
         }
     }
-    Ok(Node::Element(Element { name, args, children }))
+    Ok(Node::Element(Element {
+        name,
+        args,
+        children,
+    }))
 }
 
 fn parse_call_args(p: Pair<Rule>) -> Result<Vec<Arg>> {

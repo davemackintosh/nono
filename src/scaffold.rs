@@ -45,8 +45,8 @@ const TEMPLATE: &[(&str, &str)] = &[
 /// is a starting point, not a thing you point at your existing site by accident.
 pub fn new_project(path: &Path) -> Result<usize> {
     if path.exists() {
-        let mut entries = std::fs::read_dir(path)
-            .with_context(|| format!("reading {}", path.display()))?;
+        let mut entries =
+            std::fs::read_dir(path).with_context(|| format!("reading {}", path.display()))?;
         if entries.next().is_some() {
             bail!(
                 "{} already exists and isn't empty. Point `nono new` somewhere fresh.",
@@ -61,8 +61,7 @@ pub fn new_project(path: &Path) -> Result<usize> {
             std::fs::create_dir_all(parent)
                 .with_context(|| format!("creating {}", parent.display()))?;
         }
-        std::fs::write(&dest, contents)
-            .with_context(|| format!("writing {}", dest.display()))?;
+        std::fs::write(&dest, contents).with_context(|| format!("writing {}", dest.display()))?;
     }
 
     Ok(TEMPLATE.len())

@@ -57,8 +57,8 @@ pub fn build(cfg: &BuildConfig) -> Result<BuildStats> {
             if p.extension().and_then(|e| e.to_str()) == Some("nono") {
                 let src = std::fs::read_to_string(p)
                     .with_context(|| format!("reading {}", p.display()))?;
-                let file = parser::parse(&src)
-                    .with_context(|| format!("parsing {}", p.display()))?;
+                let file =
+                    parser::parse(&src).with_context(|| format!("parsing {}", p.display()))?;
                 for item in file.items {
                     if let Item::Stylesheet(s) = &item {
                         css.push_str(&render_css(s));
@@ -87,10 +87,8 @@ pub fn build(cfg: &BuildConfig) -> Result<BuildStats> {
         let rel = p.strip_prefix(&pages_dir).unwrap();
         validate_route(rel)?;
 
-        let src = std::fs::read_to_string(p)
-            .with_context(|| format!("reading {}", p.display()))?;
-        let page_file = parser::parse(&src)
-            .with_context(|| format!("parsing {}", p.display()))?;
+        let src = std::fs::read_to_string(p).with_context(|| format!("reading {}", p.display()))?;
+        let page_file = parser::parse(&src).with_context(|| format!("parsing {}", p.display()))?;
 
         // Combine shared items with this page's items.
         let mut items = shared_items.clone();
@@ -134,7 +132,10 @@ pub fn build(cfg: &BuildConfig) -> Result<BuildStats> {
     let layouts_dir = cfg.project.join("layouts");
     let mut content_count = 0usize;
     if content_dir.is_dir() {
-        for entry in WalkDir::new(&content_dir).into_iter().filter_map(|e| e.ok()) {
+        for entry in WalkDir::new(&content_dir)
+            .into_iter()
+            .filter_map(|e| e.ok())
+        {
             let p = entry.path();
             if p.extension().and_then(|e| e.to_str()) != Some("md") {
                 continue;
@@ -331,7 +332,13 @@ fn render_css(s: &crate::ast::Stylesheet) -> String {
     for rule in &s.rules {
         // Selector: a component name becomes a class `.Name`; a lowercase
         // selector is treated as a raw element selector.
-        let sel = if rule.selector.chars().next().map(|c| c.is_uppercase()).unwrap_or(false) {
+        let sel = if rule
+            .selector
+            .chars()
+            .next()
+            .map(|c| c.is_uppercase())
+            .unwrap_or(false)
+        {
             format!(".{}", rule.selector)
         } else {
             rule.selector.clone()
