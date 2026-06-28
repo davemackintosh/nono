@@ -57,6 +57,54 @@ fn md_file_becomes_a_page() {
 }
 
 #[test]
+fn raw_html_in_markdown_passes_through() {
+    // Embedded HTML in a post must survive verbatim (it's injected as Html::Raw),
+    // and markdown inside a blank-line-separated raw block still renders. This
+    // guards against anyone later turning on an HTML-escaping markdown option.
+    let root = scratch("md_raw_html");
+    let proj = root.join("project");
+    let out = root.join("out");
+    write(
+        &proj,
+        "pages/index.nono",
+        r#"component Home { main { "h" } }"#,
+    );
+    write(
+        &proj,
+        "layouts/posts.nono",
+        "component L(title: string) { article { Slot() } }",
+    );
+    write(
+        &proj,
+        "content/posts/embed.md",
+        "---\ntitle: Embed\n---\n<details>\n<summary>more</summary>\n\nA **bold** word and <mark>inline</mark>.\n\n</details>\n\n<div class=\"callout\" data-kind=\"note\">raw</div>\n",
+    );
+
+    build(&BuildConfig {
+        project: proj,
+        out: out.clone(),
+    })
+    .expect("build failed");
+
+    let page = fs::read_to_string(out.join("posts/embed/index.html")).expect("post missing");
+    assert!(page.contains("<details>"), "block html: {page}");
+    assert!(
+        page.contains("<summary>more</summary>"),
+        "block html: {page}"
+    );
+    assert!(page.contains("<mark>inline</mark>"), "inline html: {page}");
+    assert!(
+        page.contains(r#"<div class="callout" data-kind="note">raw</div>"#),
+        "html attrs preserved: {page}"
+    );
+    // Markdown inside the raw block is still processed.
+    assert!(
+        page.contains("<strong>bold</strong>"),
+        "md in raw block: {page}"
+    );
+}
+
+#[test]
 fn draft_md_is_not_published() {
     let root = scratch("draft");
     let proj = root.join("project");
