@@ -54,6 +54,8 @@ pub struct Function {
 pub struct Param {
     pub name: String,
     pub ty: String,
+    /// `name?: type` — the argument may be omitted, in which case it binds nil.
+    pub optional: bool,
 }
 
 /// A node is anything that can appear inside a block.

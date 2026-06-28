@@ -1282,6 +1282,10 @@
     "named": false
   },
   {
+    "type": "?",
+    "named": false
+  },
+  {
     "type": "Slot",
     "named": false
   },

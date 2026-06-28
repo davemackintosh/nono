@@ -65,7 +65,9 @@ component IndexPage {
 ## Design decisions
 
 - **`=` binds, `:` types.** `title = "x"` is an argument; `title: string` is a
-  type. They never collide.
+  type. They never collide. A param can be optional: `subtitle?: string` binds
+  `nil` when omitted, so a component branches on it with `if subtitle != nil`
+  (conditional composition without a portal system).
 - **Slots are holes; fills are arguments.** `Slot()` / `Slot(named = "x")` mark
   holes in a component. `name = { ... }` inside an invocation fills a named one;
   the unnamed trailing content fills `Slot()`. `or = nil` makes a slot optional.

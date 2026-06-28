@@ -99,10 +99,18 @@ fn parse_params(p: Pair<Rule>) -> Result<Vec<Param>> {
         if param.as_rule() != Rule::param {
             continue;
         }
-        let mut i = param.into_inner();
-        let name = i.next().unwrap().as_str().to_string();
-        let ty = i.next().unwrap().as_str().to_string();
-        out.push(Param { name, ty });
+        let mut name = String::new();
+        let mut ty = String::new();
+        let mut optional = false;
+        for part in param.into_inner() {
+            match part.as_rule() {
+                Rule::ident => name = part.as_str().to_string(),
+                Rule::optional => optional = true,
+                Rule::type_name => ty = part.as_str().to_string(),
+                _ => {}
+            }
+        }
+        out.push(Param { name, ty, optional });
     }
     Ok(out)
 }

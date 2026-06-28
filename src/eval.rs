@@ -382,6 +382,9 @@ impl Evaluator {
                 }
             } else if let Some(e) = pos_iter.next() {
                 scope.insert(param.name.clone(), self.eval_expr(e, env)?);
+            } else if param.optional {
+                // `name?: type` left out: bind nil so the body can branch on it.
+                scope.insert(param.name.clone(), Value::Nil);
             } else {
                 bail!(
                     "missing argument `{}` for component {}",
@@ -565,6 +568,8 @@ impl Evaluator {
                 scope.insert(param.name.clone(), self.eval_expr(e, env)?);
             } else if let Some(e) = pos_iter.next() {
                 scope.insert(param.name.clone(), self.eval_expr(e, env)?);
+            } else if param.optional {
+                scope.insert(param.name.clone(), Value::Nil);
             } else {
                 bail!(
                     "missing argument `{}` for function {}",

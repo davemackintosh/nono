@@ -209,3 +209,52 @@ fn match_on_kind_field() {
     "#;
     assert_eq!(render(src, "P"), "<div></div>");
 }
+
+#[test]
+fn optional_param_omitted_binds_nil() {
+    // `subtitle?: string` may be left out; the body branches on nil. A caller
+    // and callee in one program so we drive it through a parent component.
+    let src = r#"
+        component Hero(title: string, subtitle?: string) {
+          h1 { "{title}" }
+          if subtitle != nil {
+            p { "{subtitle}" }
+          }
+        }
+        component Page {
+          div { Hero(title = "Nono") }
+        }
+    "#;
+    assert_eq!(render(src, "Page"), "<div><h1>Nono</h1></div>");
+}
+
+#[test]
+fn optional_param_provided_renders() {
+    let src = r#"
+        component Hero(title: string, subtitle?: string) {
+          h1 { "{title}" }
+          if subtitle != nil {
+            p { "{subtitle}" }
+          }
+        }
+        component Page {
+          div { Hero(title = "Nono", subtitle = "spite SSG") }
+        }
+    "#;
+    assert_eq!(
+        render(src, "Page"),
+        "<div><h1>Nono</h1><p>spite SSG</p></div>"
+    );
+}
+
+#[test]
+fn missing_required_param_still_errors() {
+    let src = r#"
+        component Hero(title: string) { h1 { "{title}" } }
+        component Page { div { Hero() } }
+    "#;
+    assert!(
+        render_err(src, "Page").contains("missing argument `title`"),
+        "a required param must still be enforced"
+    );
+}

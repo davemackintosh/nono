@@ -32,7 +32,9 @@ function = { "fn" ~ ident ~ params? ~ "=" ~ expr }
 component = { "component" ~ ident ~ params? ~ block }
 
 params = { "(" ~ (param ~ ("," ~ param)*)? ~ ","? ~ ")" }
-param  = { ident ~ ":" ~ type_name }
+// `name?: type` marks the param optional: omitted at the call site, it binds nil.
+param  = { ident ~ optional? ~ ":" ~ type_name }
+optional = { "?" }
 type_name = { ident }
 
 // ---- block: the body of a component or a slot/named-arg ----

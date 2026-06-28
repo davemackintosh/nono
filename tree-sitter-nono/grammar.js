@@ -64,7 +64,8 @@ module.exports = grammar({
       field('body', $.block),
     ),
     parameters: $ => seq('(', commaSep($.parameter), ')'),
-    parameter: $ => seq(field('name', $.identifier), ':', field('type', $.type)),
+    // `name?: type` marks the parameter optional (binds nil when omitted).
+    parameter: $ => seq(field('name', $.identifier), optional('?'), ':', field('type', $.type)),
     type: $ => $.identifier,
 
     // ---- function: `fn name(params) = expr` (returns a value, not markup) ----
