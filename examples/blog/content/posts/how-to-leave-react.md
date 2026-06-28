@@ -2,6 +2,7 @@
 title: How to leave React
 date: 2026-06-20
 kind: Essay
+summary: Eleven years, forty thousand files, and the quiet joy of deleting all of them.
 ---
 
 After eleven years, I am tired. Here is what I did instead.

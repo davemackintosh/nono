@@ -40,14 +40,19 @@ jobs:
         run: cargo test --locked --verbose
 
       - name: Build the example sites
-        # The blog template is key-free now, so neither of these needs a secret.
+        # The blog template runs Tailwind via its build step, so install its node
+        # deps first. It needs no API key. torture has no build stage.
         run: |
+          npm install --prefix examples/blog
           cargo run --locked -- build examples/blog --out /tmp/blog-out
           cargo run --locked -- build examples/torture --out /tmp/torture-out
 
       - name: Scaffold a fresh project and build it
+        # A scaffolded site carries the same Tailwind build step, so install its
+        # deps before building, exactly as a real user would.
         run: |
           cargo run --locked -- new --path /tmp/scaffold
+          npm install --prefix /tmp/scaffold
           cargo run --locked -- build /tmp/scaffold --out /tmp/scaffold-out
 
       - name: The should-fail cases must fail loudly

@@ -1,21 +1,8 @@
-# Project configuration. Everything here is optional; delete the file and the
-# site still builds, just without the asset pipeline below.
+# Project configuration.
 
 [build]
-# Commands run, in order, before every build (including each `nono dev` reload).
-# This is the build stage: use it for Tailwind, esbuild, a sass compile, whatever
-# produces the CSS/JS your pages link. Keep them quick; do `npm install` by hand.
-#
-# Two path tokens are substituted before a command runs:
-#   <rootDir>    the project root
-#   <publicDir>  the static/ directory (its contents become the site root)
-#
-# nono links nothing for you. The template ships a hand-written static/styles.css
-# and links it from a head { } block in lib/components.nono (see SiteHead). To
-# theme with Tailwind instead:
-#   1. npm install tailwindcss @tailwindcss/cli
-#   2. put your directives in assets/app.css
-#   3. uncomment the step below (it writes straight into static/, which is served)
-#
-# steps = ["npx @tailwindcss/cli -i assets/app.css -o <publicDir>/styles.css --minify"]
-steps = []
+# Compile Tailwind to static/styles.css before each build (including every
+# `nono dev` reload). Run `npm install` once first so the CLI is available.
+# Two path tokens are substituted: <rootDir> (project root) and <publicDir>
+# (the static/ directory, whose contents become the site root).
+steps = ["npx @tailwindcss/cli -i assets/app.css -o <publicDir>/styles.css --minify"]

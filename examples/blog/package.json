@@ -1,0 +1,10 @@
+{
+  "name": "nono-blog",
+  "private": true,
+  "description": "A Nono site. Run `npm install`, then `nono dev`.",
+  "devDependencies": {
+    "@tailwindcss/cli": "^4",
+    "@tailwindcss/typography": "^0.5",
+    "tailwindcss": "^4"
+  }
+}

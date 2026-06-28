@@ -36,14 +36,27 @@ const TEMPLATE: &[(&str, &str)] = &[
         include_str!("../examples/blog/content/posts/a-quick-note.md"),
     ),
     (
+        "content/posts/building-nono.md",
+        include_str!("../examples/blog/content/posts/building-nono.md"),
+    ),
+    (
+        "content/posts/on-shipping-nothing.md",
+        include_str!("../examples/blog/content/posts/on-shipping-nothing.md"),
+    ),
+    (
         "content/posts/draft-thing.md",
         include_str!("../examples/blog/content/posts/draft-thing.md"),
     ),
     ("nono.toml", include_str!("../examples/blog/nono.toml")),
     (
-        "static/styles.css",
-        include_str!("../examples/blog/static/styles.css"),
+        "assets/app.css",
+        include_str!("../examples/blog/assets/app.css"),
     ),
+    (
+        "package.json",
+        include_str!("../examples/blog/package.json"),
+    ),
+    (".gitignore", include_str!("../examples/blog/.gitignore")),
     (
         ".github/workflows/deploy.yml",
         include_str!("../examples/blog/.github/workflows/deploy.yml"),

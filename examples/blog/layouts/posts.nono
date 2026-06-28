@@ -1,16 +1,19 @@
 // Layout for everything under content/posts/. Selected by the file's location
 // (content/posts/<x>.md -> layouts/posts.nono), not by this component's name.
 //
-// It reuses the Post component from lib/ and hands the markdown body straight
-// through Post's own Slot(). The body fills this layout's Slot(), which is
-// nested inside Post; the evaluator carries the fill down so it lands correctly.
-//
-// `headings` comes free with every markdown page; TableOfContents is a standard
-// library component (see src/std.nono) that turns it into a nav of anchor links.
+// The markdown body fills this layout's Slot(), which sits inside Shell and the
+// prose wrapper; the evaluator routes the fill down through both. `headings`
+// comes free with every markdown page; TableOfContents is a standard-library
+// component that turns it into a nav of anchor links.
 component PostLayout(title: string, date: string, headings: list) {
-  SiteHead()
-  Post(title = title, date = date) {
-    TableOfContents(headings = headings)
-    Slot()
+  Shell {
+    article(class = "max-w-none") {
+      h1(class = "text-3xl font-bold tracking-tight") { "{title}" }
+      time(class = "block text-sm text-neutral-500 mt-1 mb-6") { "{date}" }
+      TableOfContents(headings = headings)
+      div(class = "prose prose-neutral max-w-none") {
+        Slot()
+      }
+    }
   }
 }

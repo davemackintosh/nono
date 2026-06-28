@@ -1,9 +1,17 @@
-// A flat page. Routes to about/index.html (vanity URL).
+// A flat page. Routes to about/index.html (vanity URL). Uses Shell's optional
+// `heading` to get an <h1> for free.
 
 component AboutPage {
-  SiteHead()
-  Layout(heading = "About") {
-    Prose { "I asked two friends for advice on stable frameworks." }
-    Prose { "They bet I would build my own. No, no, I will do it myself." }
+  Shell(heading = "About") {
+    Prose {
+      "I write code for a living and, apparently, frameworks out of spite for a
+       hobby. Two friends suggested I pick something stable and boring to rebuild
+       my blog with. I built this instead: a compiler for a little SwiftUI-ish
+       markup language that emits plain HTML at build time."
+    }
+    Prose {
+      "Is it sensible? No. Does it work? Annoyingly, yes. One of them has already
+       admitted to liking it, which I am choosing to treat as a full surrender."
+    }
   }
 }

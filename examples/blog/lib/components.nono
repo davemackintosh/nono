@@ -1,52 +1,71 @@
-// Shared library: components used across pages, plus the stylesheet.
+// Shared library: the site chrome and reusable pieces, styled with Tailwind
+// utility classes. Tailwind is built by the step in nono.toml and scans these
+// files for class names; nothing here is special to nono beyond the markup.
 
-stylesheet {
-  Prose {
-    max-width = 65ch
-    line-height = 1.6
-  }
-
-  Tag {
-    display = inline-block
-    padding = 0.2em 0.6em
-  }
-}
-
-component Heading(level: string) {
-  // A tiny demo of using a param as an attribute value.
-  h2(data-level = level) { Slot() }
-}
-
-component Prose {
-  p(class = "Prose") { Slot() }
-}
-
-component Tag {
-  span(class = "Tag") { Slot() }
-}
-
-component Post(title: string, date: string) {
-  article {
-    h1 { "{title}" }
-    time(datetime = date) { "{date}" }
-    Slot()
-  }
-}
-
-component Layout(heading: string) {
-  main {
-    h1 { "{heading}" }
-    Slot()
-  }
-  aside { Slot(named = "sidebar", or = nil) }
-}
-
-// Document head, shared across every page. A `head { }` block is lifted into the
-// document <head> from wherever it renders, so each page just drops a SiteHead()
-// in and the stylesheet link lands in the right place. This is also how you link
-// whatever your build step produces; nono itself injects nothing.
+// Document head, shared across every page. A head { } block is lifted into the
+// document <head> from wherever it renders, so each page drops a SiteHead() in
+// and the compiled stylesheet link lands in the right place.
 component SiteHead {
   head {
     link(rel = "stylesheet", href = "/styles.css")
+  }
+}
+
+// Top bar: site name on the left, navigation on the right.
+component Header {
+  header(class = "border-b border-neutral-200") {
+    div(class = "mx-auto max-w-3xl px-6 py-4 flex items-center justify-between") {
+      a(href = "/", class = "font-semibold tracking-tight text-lg text-neutral-900") {
+        "New World Code"
+      }
+      nav(class = "flex gap-5 text-sm text-neutral-600") {
+        a(href = "/", class = "hover:text-neutral-900") { "Home" }
+        a(href = "/about/", class = "hover:text-neutral-900") { "About" }
+      }
+    }
+  }
+}
+
+// Bottom bar.
+component Footer {
+  footer(class = "border-t border-neutral-200 mt-16") {
+    div(class = "mx-auto max-w-3xl px-6 py-8 text-sm text-neutral-500") {
+      "Built with spite and Nono. No, no, I did it myself."
+    }
+  }
+}
+
+// The page shell every page wraps itself in: head, header, a centred main
+// column, footer. `heading?` is optional (the new `?` syntax): pass it and the
+// page gets an <h1>; leave it out and it doesn't.
+component Shell(heading?: string) {
+  SiteHead()
+  div(class = "min-h-screen flex flex-col bg-white text-neutral-900") {
+    Header()
+    main(class = "flex-1 w-full mx-auto max-w-3xl px-6 py-10") {
+      if heading != nil {
+        h1(class = "text-3xl font-bold tracking-tight mb-8") { "{heading}" }
+      }
+      Slot()
+    }
+    Footer()
+  }
+}
+
+// A paragraph of body copy.
+component Prose {
+  p(class = "text-neutral-700 leading-relaxed mb-4") { Slot() }
+}
+
+// A post in a listing: the whole card links through to the post's page.
+component PostCard(title: string, date: string, slug: string, summary: string) {
+  article(class = "py-6 border-b border-neutral-100 last:border-0") {
+    a(href = "/posts/{slug}/", class = "group block") {
+      h3(class = "text-xl font-semibold tracking-tight text-neutral-900 group-hover:underline") {
+        "{title}"
+      }
+      time(class = "block text-sm text-neutral-500 mt-1") { "{date}" }
+      p(class = "text-neutral-600 mt-2") { "{summary}" }
+    }
   }
 }

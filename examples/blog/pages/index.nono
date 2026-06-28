@@ -1,37 +1,33 @@
-// The index page. Exercises: data sources, named + default slots, a for-loop
-// over a glob, match on post.kind, and string interpolation.
-//
-// It builds with zero setup. The sidebar shows off the Last.fm standard-library
-// function but keeps it switched off so a fresh `nono new` site builds without
-// an API key. To turn it on:
-//   1. export NONO_LASTFM_KEY=your-key
-//   2. uncomment the `recent_tracks` const and the `for track` loop below.
-//
-// `lastfm_recent` is not a builtin: it's a standard-library function (see
-// src/std.nono) written on top of the generic `http_get` and `env`. It returns
-// Last.fm's raw track JSON, where the artist name hides at artist["#text"].
-
-// const recent_tracks = lastfm_recent(user = "davemackintosh", limit = 10)
+// The home page: a short about blurb, then the posts, each linking to its own
+// page. Posts come from content/posts/*.md (drafts are excluded automatically).
 const posts = glob("content/posts/*.md")
 
 component IndexPage {
-  SiteHead()
-  Layout(heading = "New World Code") {
-    sidebar = {
-      Heading(2) { "Listening to" }
-      Prose { "Nothing right now. Wire up Last.fm in pages/index.nono." }
-      // for track in recent_tracks {
-      //   Prose { "{track.artist["#text"]} - {track.name}" }
-      // }
+  Shell {
+    section(class = "mb-12") {
+      h1(class = "text-3xl font-bold tracking-tight mb-3") { "New World Code" }
+      Prose {
+        "I asked two friends for advice on stable frameworks for rebuilding my
+         blog. They bet I'd go and build my own instead. This is that blog, built
+         with the static site generator I wrote out of spite. It ships no
+         JavaScript, because of course it doesn't."
+      }
+      a(href = "/about/", class = "text-sm font-medium text-neutral-900 underline underline-offset-4") {
+        "More about this nonsense"
+      }
     }
 
-    // default block: the posts list
-    for post in posts {
-      match post.kind {
-        Note => Prose { "{post.title}" }
-        Essay => Post(title = post.title, date = post.date) {
-          Prose { "{post.title}" }
-        }
+    section {
+      h2(class = "text-sm font-semibold uppercase tracking-wide text-neutral-400 mb-2") {
+        "Writing"
+      }
+      for post in posts {
+        PostCard(
+          title = post.title,
+          date = post.date,
+          slug = post.slug,
+          summary = post.summary
+        )
       }
     }
   }

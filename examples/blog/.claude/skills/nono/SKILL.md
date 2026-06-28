@@ -11,10 +11,15 @@ compiles them to static HTML. It ships **nothing** to the browser: no JS, no
 runtime, no hydration. Everything resolves at build time. The pipeline is
 parse → evaluate → emit HTML.
 
-If you scaffolded this with `nono new`, you already have a working blog: an index
-page, an about page, a posts layout, shared components in `lib/`, two posts in
-`content/posts/`, a hand-written `static/styles.css` linked via a `SiteHead`
-component, and a Vercel deploy workflow. Edit those; run `nono dev` to preview.
+If you scaffolded this with `nono new`, you already have a working blog: a home
+page with an about blurb and a linked post list, an about page, a posts layout,
+shared chrome in `lib/` (a `Shell` with `Header`/`Footer`, plus `Prose` and
+`PostCard`), several posts in `content/posts/`, and a Vercel deploy workflow.
+
+Styling is **Tailwind** (v4): `assets/app.css` is compiled to `static/styles.css`
+by the build step in `nono.toml`, and `SiteHead` links it. So: run `npm install`
+once, then `nono dev` to preview. Components use Tailwind utility classes; the
+build step re-runs Tailwind on every reload, so new classes appear on refresh.
 
 ## The shape of a project
 

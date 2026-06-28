@@ -174,11 +174,13 @@ cargo build --release
 ```
 
 `nono new` copies the blog template (the same thing that lives under
-`examples/blog`, baked into the binary) into a fresh directory. It refuses to
-write into anything that already has files in it, so you can't point it at your
-real site and lose everything. The scaffold includes a Claude Code skill at
-`.claude/skills/nono/`, so the next person poking at the site gets told how the
-DSL works without having to ask.
+`examples/blog`, baked into the binary) into a fresh directory: a home page,
+about page, several posts, shared `Header`/`Footer`/`Shell` chrome, and Tailwind
+wired up through the build stage. Run `npm install` once, then `nono dev`. It
+refuses to write into anything that already has files in it, so you can't point
+it at your real site and lose everything. The scaffold also includes a Claude
+Code skill at `.claude/skills/nono/`, so the next person poking at the site gets
+told how the DSL works without having to ask.
 
 `nono dev` rebuilds the whole site on every request, so you edit a file, hit
 refresh, and see it. A build error renders in the browser instead of taking the

@@ -33,6 +33,10 @@ jobs:
             -o /usr/local/bin/nono
           chmod +x /usr/local/bin/nono
 
+      # Install the asset-pipeline deps (Tailwind) so the build step can run.
+      - name: Install site dependencies
+        run: npm install
+
       - name: Build the site
         run: nono build . --out out
 

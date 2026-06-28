@@ -1,0 +1,43 @@
+/* Tailwind input. The nono.toml build step compiles this to static/styles.css,
+   which SiteHead links. Tailwind v4 needs no config file: it scans the sources
+   below for class names and emits only what's used. */
+
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* Where the class names live (paths are relative to this file). */
+@source "../pages/**/*.nono";
+@source "../layouts/**/*.nono";
+@source "../lib/**/*.nono";
+
+/* The standard-library table of contents emits .toc / .toc-h2 / .toc-h3, which
+   Tailwind doesn't know about, so style them here. */
+@layer components {
+  nav.toc {
+    font-size: 0.875rem;
+    background: #fafafa;
+    border: 1px solid #e5e5e5;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    margin-bottom: 2rem;
+  }
+  nav.toc ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  nav.toc li {
+    margin: 0.2rem 0;
+  }
+  nav.toc .toc-h3 {
+    padding-left: 1rem;
+  }
+  nav.toc a {
+    color: #525252;
+    text-decoration: none;
+  }
+  nav.toc a:hover {
+    color: #171717;
+    text-decoration: underline;
+  }
+}
