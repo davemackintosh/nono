@@ -355,6 +355,21 @@ fn parse_postfix(p: Pair<Rule>) -> Result<Expr> {
             Expr::Path(parse_path(path_pair))
         }
         Rule::paren => parse_expr(base.into_inner().next().unwrap())?,
+        Rule::list => {
+            let items = base.into_inner().map(parse_expr).collect::<Result<_>>()?;
+            Expr::List(items)
+        }
+        Rule::map => {
+            let mut entries = Vec::new();
+            for entry in base.into_inner() {
+                // map_entry = ident "=" expr
+                let mut i = entry.into_inner();
+                let key = i.next().unwrap().as_str().to_string();
+                let value = parse_expr(i.next().unwrap())?;
+                entries.push((key, value));
+            }
+            Expr::Map(entries)
+        }
         other => bail!("unexpected postfix base: {:?}", other),
     };
     for acc in inner {

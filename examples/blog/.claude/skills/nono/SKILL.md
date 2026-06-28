@@ -148,6 +148,21 @@ Literals `number`, `true`/`false`, `nil`, `string`. Paths `a.b.c`. Calls
 for JSON keys that aren't identifiers) and `xs[0]` (list index). Operators
 `== != < <= > >= + - * /`.
 
+Collection literals let you author data inline (no data source needed):
+
+```nono
+const nav = [
+  { label = "Home",  href = "/" },
+  { label = "About", href = "/about/" },
+]
+```
+
+`[ ... ]` is a list, `{ key = value }` a map (keys are plain idents; values are
+any expression, so lists and maps nest). Literals can carry accessors:
+`[10, 20][1]` is `20`, `{ a = 1 }.a` is `1`. Note: a bare `{ ... }` after `name =`
+in a component invocation is a slot fill (a block), not a map — wrap a map in
+parens there, `name = ({ a = 1 })`, or bind it to a `const` first.
+
 **No operator precedence** — expressions are strictly left to right, so
 `1 + 2 * 3` is 9, not 7. Parenthesise or reorder if it matters.
 

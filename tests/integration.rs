@@ -258,3 +258,52 @@ fn missing_required_param_still_errors() {
         "a required param must still be enforced"
     );
 }
+
+#[test]
+fn list_literal_iterated() {
+    let src = r#"
+        component P {
+          ul { for n in [1, 2, 3] { li { "{n}" } } }
+        }
+    "#;
+    assert_eq!(render(src, "P"), "<ul><li>1</li><li>2</li><li>3</li></ul>");
+}
+
+#[test]
+fn list_literal_indexed() {
+    let src = r#"component P { div { "{[10, 20, 30][1]}" } }"#;
+    assert_eq!(render(src, "P"), "<div>20</div>");
+}
+
+#[test]
+fn map_literal_field_access() {
+    let src = r#"
+        const site = { name = "Nono", tagline = "no, no" }
+        component P { div { "{site.name}: {site.tagline}" } }
+    "#;
+    assert_eq!(render(src, "P"), "<div>Nono: no, no</div>");
+}
+
+#[test]
+fn list_of_maps_literal() {
+    // The headline use case: inline structured data, no data source.
+    let src = r#"
+        const nav = [
+          { label = "Home", href = "/" },
+          { label = "About", href = "/about/" },
+        ]
+        component Nav {
+          nav { for item in nav { a(href = item.href) { "{item.label}" } } }
+        }
+    "#;
+    assert_eq!(
+        render(src, "Nav"),
+        r#"<nav><a href="/">Home</a><a href="/about/">About</a></nav>"#
+    );
+}
+
+#[test]
+fn empty_list_literal_renders_nothing() {
+    let src = r#"component P { ul { for n in [] { li { "{n}" } } } }"#;
+    assert_eq!(render(src, "P"), "<ul></ul>");
+}

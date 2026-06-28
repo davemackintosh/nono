@@ -160,6 +160,10 @@ pub enum Expr {
     Field(Box<Expr>, String),
     /// A `["key"]` (or `[index]`) accessor: `track.artist["#text"]`, `xs[0]`.
     Index(Box<Expr>, Box<Expr>),
+    /// A list literal: `[1, 2, 3]`.
+    List(Vec<Expr>),
+    /// A map literal: `{ label = "Home", href = "/" }`. Keys are idents.
+    Map(Vec<(String, Expr)>),
     Binary(Box<Expr>, BinOp, Box<Expr>),
 }
 

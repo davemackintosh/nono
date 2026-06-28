@@ -81,6 +81,7 @@
 (named_argument name: (hyphenated_name) @property)
 (slot_argument name: (identifier) @property)
 (named_fill name: (identifier) @property)
+(map_entry key: (identifier) @property)
 
 ; match patterns: `Note`, `Essay`, `_`.
 (pattern tag: (identifier) @constant)

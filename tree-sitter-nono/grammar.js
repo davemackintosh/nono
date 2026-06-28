@@ -78,7 +78,10 @@ module.exports = grammar({
     ),
 
     // ---- block: the body of a component, slot fill, or control structure ----
-    block: $ => seq('{', repeat($._node), '}'),
+    // Higher precedence than `map` so an ambiguous `{ ... }` in argument position
+    // (most visibly the empty `{}`) is read as a block/slot fill, matching the
+    // pest grammar's ordered `arg_value = block | expr`.
+    block: $ => prec(1, seq('{', repeat($._node), '}')),
 
     _node: $ => choice(
       $.for_statement,
@@ -170,7 +173,7 @@ module.exports = grammar({
     // A base value followed by any chain of `.field` and `["key"]` accessors,
     // mirroring the pest grammar's `postfix = base ~ accessor*`.
     postfix_expression: $ => seq(
-      field('base', choice($.call, $.field_access, $.parenthesized_expression)),
+      field('base', choice($.call, $.field_access, $.parenthesized_expression, $.list, $.map)),
       repeat($._accessor),
     ),
     _accessor: $ => choice($.member_accessor, $.subscript_accessor),
@@ -178,6 +181,11 @@ module.exports = grammar({
     subscript_accessor: $ => seq('[', field('index', $._expression), ']'),
 
     parenthesized_expression: $ => seq('(', $._expression, ')'),
+
+    // Collection literals: `[1, 2, 3]` and `{ label = "Home", href = "/" }`.
+    list: $ => seq('[', commaSep($._expression), ']'),
+    map: $ => seq('{', commaSep($.map_entry), '}'),
+    map_entry: $ => seq(field('key', $.identifier), '=', field('value', $._expression)),
 
     // `http_get(url)`, `glob("...")`, or a user function `my_fn(x = 1)`
     call: $ => seq(field('function', $.path), '(', commaSep($.argument), ')'),

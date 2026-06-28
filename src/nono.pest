@@ -101,13 +101,22 @@ primary = _{ number | bool | nil | string | postfix }
 // A base value followed by any chain of `.field` and `["key"]` accessors. The
 // accessors reach into data-source results, e.g. `http_get(url).recenttracks`,
 // and at JSON keys that aren't identifiers, e.g. `track.artist["#text"]`.
+// list/map are bases too, so a literal can carry accessors: `[1,2,3][0]`,
+// `{ a = 1 }.a`. `[` only starts a list at a base position (an `[` after a base
+// is the `index` accessor); `{` never begins a postfix elsewhere, so no collision.
 postfix      = { base ~ accessor* }
-base         = _{ call | field_access | paren }
+base         = _{ call | field_access | paren | list | map }
 accessor     = _{ field_suffix | index }
 field_suffix = { "." ~ ident }
 index        = { "[" ~ expr ~ "]" }
 
 paren = { "(" ~ expr ~ ")" }
+
+// Collection literals. `[1, 2, 3]` and `{ label = "Home", href = "/" }`. A map
+// key is a plain ident; values are any expr, so maps and lists nest freely.
+list = { "[" ~ (expr ~ ("," ~ expr)*)? ~ ","? ~ "]" }
+map  = { "{" ~ (map_entry ~ ("," ~ map_entry)*)? ~ ","? ~ "}" }
+map_entry = { ident ~ "=" ~ expr }
 
 // function call in expression position: http_get(url), glob("..."), my_fn(x = 1)
 call = { path ~ "(" ~ (arg ~ ("," ~ arg)*)? ~ ","? ~ ")" }

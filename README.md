@@ -74,7 +74,9 @@ component IndexPage {
 - **`const` is bind-time.** Data sources run during evaluation and fold into the
   tree. The builtins are deliberately generic: `glob`, `markdown`, `http_get`,
   `env`. There is no `var` yet, because nothing at build time legitimately
-  mutates. It arrives when something needs it.
+  mutates. It arrives when something needs it. Data needn't come from a source:
+  list and map literals (`[1, 2]`, `{ label = "Home", href = "/" }`) let you write
+  inline structured data, like a nav menu, and they nest and take accessors.
 - **Functions are userland, and so is the standard library.** `fn name(p: type)
   = expr` defines a value-returning function, distinct from a component (which
   returns markup). The core ships no service-specific builtin: `lastfm_recent`

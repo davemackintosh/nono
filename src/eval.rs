@@ -457,6 +457,20 @@ impl Evaluator {
                 let k = self.eval_expr(key, env)?;
                 index_value(&v, &k)
             }
+            Expr::List(items) => {
+                let mut out = Vec::with_capacity(items.len());
+                for item in items {
+                    out.push(self.eval_expr(item, env)?);
+                }
+                Ok(Value::List(out))
+            }
+            Expr::Map(entries) => {
+                let mut map = BTreeMap::new();
+                for (key, value) in entries {
+                    map.insert(key.clone(), self.eval_expr(value, env)?);
+                }
+                Ok(Value::Map(map))
+            }
             Expr::Binary(l, op, r) => {
                 let lv = self.eval_expr(l, env)?;
                 let rv = self.eval_expr(r, env)?;
