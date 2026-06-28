@@ -39,6 +39,10 @@ const TEMPLATE: &[(&str, &str)] = &[
         "content/posts/draft-thing.md",
         include_str!("../examples/blog/content/posts/draft-thing.md"),
     ),
+    (
+        ".github/workflows/deploy.yml",
+        include_str!("../examples/blog/.github/workflows/deploy.yml"),
+    ),
 ];
 
 /// Write the template into `path`. Refuses to clobber a non-empty directory: this

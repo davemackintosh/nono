@@ -185,6 +185,19 @@ The Last.fm source reads its API key from `NONO_LASTFM_KEY`. If it's unset or
 the call fails, the source errors; pair it with `or =` on the slot, or a weekly
 rebuild cadence, so a flaky API never takes down the build.
 
+## Deploying
+
+`nono build` emits a folder of static HTML, with vanity directories
+(`about/index.html`) that any host serves as clean URLs (`/about`). Point a CDN
+at the output and you're done.
+
+A site made with `nono new` ships a `.github/workflows/deploy.yml` for Vercel.
+The build runs in GitHub Actions, not on Vercel: Actions installs nono, builds
+the site, wraps the output in Vercel's Build Output API, and deploys it
+prebuilt, so Vercel never touches Rust and only ever serves finished HTML. Set
+three repository secrets (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`,
+the last two from a local `vercel link`) and a push to `main` ships it.
+
 ## Editor support
 
 There's a tree-sitter grammar in [`tree-sitter-nono/`](tree-sitter-nono/) for
