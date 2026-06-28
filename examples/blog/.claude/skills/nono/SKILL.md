@@ -62,7 +62,9 @@ component Post(title: string, date: string) {
 ```
 
 - **Capitalised name = component** (must be defined). **lowercase = HTML element**
-  (must be a known tag, e.g. `div`, `p`, `nav`, `article`, `h1`...).
+  (must be a known tag). The allowlist covers most of HTML5 — structure, text,
+  tables, forms, media, `details`/`summary`/`dialog`, and a basic SVG set — so an
+  unknown lowercase name is treated as a typo and errors loudly.
 - Attributes are named args: `p(class = "Prose")`, `a(href = "/x")`. Attribute
   names may contain hyphens (`data-level`, `aria-label`); plain identifiers may
   not (so `a-b` is subtraction).

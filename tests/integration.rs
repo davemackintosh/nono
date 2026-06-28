@@ -307,3 +307,35 @@ fn empty_list_literal_renders_nothing() {
     let src = r#"component P { ul { for n in [] { li { "{n}" } } } }"#;
     assert_eq!(render(src, "P"), "<ul></ul>");
 }
+
+#[test]
+fn newly_supported_elements_render() {
+    // details/summary, definition lists, and a void media element.
+    let src = r#"
+        component P {
+          details {
+            summary { "more" }
+            dl { dt { "term" } dd { "definition" } }
+            video(src = "x.mp4") { source(src = "x.webm") }
+            svg(viewBox = "0 0 1 1") { path(d = "M0 0") }
+          }
+        }
+    "#;
+    let html = render(src, "P");
+    assert!(
+        html.contains("<details><summary>more</summary>"),
+        "got: {html}"
+    );
+    assert!(
+        html.contains("<dl><dt>term</dt><dd>definition</dd></dl>"),
+        "got: {html}"
+    );
+    assert!(
+        html.contains(r#"<source src="x.webm" />"#),
+        "void self-closes: {html}"
+    );
+    assert!(
+        html.contains(r#"<svg viewBox="0 0 1 1"><path d="M0 0"></path></svg>"#),
+        "got: {html}"
+    );
+}
