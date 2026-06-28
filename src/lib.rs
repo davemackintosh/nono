@@ -5,6 +5,7 @@
 
 pub mod ast;
 pub mod build;
+pub mod config;
 pub mod eval;
 pub mod html;
 pub mod parser;

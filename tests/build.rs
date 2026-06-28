@@ -247,6 +247,58 @@ fn markdown_headings_drive_a_table_of_contents() {
 }
 
 #[test]
+fn build_step_runs_and_its_output_is_linked() {
+    let root = scratch("build_steps");
+    let proj = root.join("project");
+    let out = root.join("out");
+    write(
+        &proj,
+        "pages/index.nono",
+        r#"component Home { main { "hi" } }"#,
+    );
+    // The step writes a stylesheet into static/, which then gets copied out and
+    // linked from the head. This proves steps run before the static copy and
+    // that [build] styles lands in the document.
+    write(
+        &proj,
+        "nono.toml",
+        "[build]\nstyles = [\"/generated.css\"]\nsteps = [\"mkdir -p static && printf 'body{color:red}' > static/generated.css\"]\n",
+    );
+
+    build(&BuildConfig {
+        project: proj,
+        out: out.clone(),
+    })
+    .expect("build failed");
+
+    let page = fs::read_to_string(out.join("index.html")).expect("index missing");
+    assert!(
+        page.contains(r#"<link rel="stylesheet" href="/generated.css" />"#),
+        "got: {page}"
+    );
+    let css = fs::read_to_string(out.join("generated.css")).expect("generated css missing");
+    assert!(css.contains("color:red"), "got: {css}");
+}
+
+#[test]
+fn failing_build_step_aborts_the_build() {
+    let root = scratch("build_step_fail");
+    let proj = root.join("project");
+    let out = root.join("out");
+    write(
+        &proj,
+        "pages/index.nono",
+        r#"component Home { main { "hi" } }"#,
+    );
+    write(&proj, "nono.toml", "[build]\nsteps = [\"exit 3\"]\n");
+
+    let err = build(&BuildConfig { project: proj, out })
+        .expect_err("a failing build step should fail the build")
+        .to_string();
+    assert!(err.contains("build step failed"), "got: {err}");
+}
+
+#[test]
 fn page_with_two_components_is_rejected() {
     let root = scratch("two_components");
     let proj = root.join("project");

@@ -16,6 +16,7 @@
 //! loaded into every page's scope.
 
 use crate::ast::Item;
+use crate::config::Config;
 use crate::eval::Evaluator;
 use crate::html;
 use crate::parser;
@@ -47,6 +48,14 @@ pub fn build(cfg: &BuildConfig) -> Result<BuildStats> {
     if !pages_dir.is_dir() {
         bail!("no pages/ directory in {}", cfg.project.display());
     }
+
+    // Project config (nono.toml). Absent is fine; it just means no asset
+    // pipeline and no linked stylesheets.
+    let config = Config::load(&cfg.project)?;
+
+    // Run the asset build steps first, so anything they emit into static/ (a
+    // compiled stylesheet, say) is in place before we copy static/ across.
+    run_build_steps(&cfg.project, &config.build.steps)?;
 
     // Load shared library items (components + stylesheet) from lib/*.nono.
     let mut shared_items: Vec<Item> = Vec::new();
@@ -113,7 +122,7 @@ pub fn build(cfg: &BuildConfig) -> Result<BuildStats> {
         let body = html::render(&nodes);
 
         let title = derive_title(&page_component, rel);
-        let doc = html::document(&title, &page_css, &body);
+        let doc = html::document(&title, &config.build.styles, &page_css, &body);
 
         let out_path = route_to_output(&cfg.out, rel);
         if let Some(parent) = out_path.parent() {
@@ -209,7 +218,7 @@ pub fn build(cfg: &BuildConfig) -> Result<BuildStats> {
                 Some(Value::Str(s)) => s.clone(),
                 _ => layout_component.clone(),
             };
-            let doc = html::document(&title, &page_css, &body);
+            let doc = html::document(&title, &config.build.styles, &page_css, &body);
 
             let out_path = route_to_output(&cfg.out, rel);
             if let Some(parent) = out_path.parent() {
@@ -240,6 +249,28 @@ pub fn build(cfg: &BuildConfig) -> Result<BuildStats> {
         nono_pages: page_count,
         content_pages: content_count,
     })
+}
+
+/// Run the configured asset build steps in order, from the project root. Each is
+/// handed to `sh -c`, with stdout/stderr inherited so Tailwind and friends report
+/// as usual. A non-zero exit aborts the build, naming the step that failed.
+fn run_build_steps(project: &Path, steps: &[String]) -> Result<()> {
+    for step in steps {
+        let status = std::process::Command::new("sh")
+            .arg("-c")
+            .arg(step)
+            .current_dir(project)
+            .status()
+            .with_context(|| format!("running build step `{}`", step))?;
+        if !status.success() {
+            bail!(
+                "build step failed (`{}`): exit {}",
+                step,
+                status.code().unwrap_or(-1)
+            );
+        }
+    }
+    Ok(())
 }
 
 /// A page or layout file must define exactly one component. This is a filesystem

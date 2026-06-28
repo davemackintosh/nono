@@ -163,14 +163,22 @@ fn escape_attr_into(s: &str, out: &mut String) {
     }
 }
 
-/// Wrap body HTML in a complete document with the given title and stylesheet.
-pub fn document(title: &str, css: &str, body: &str) -> String {
+/// Wrap body HTML in a complete document with the given title, linked external
+/// stylesheets (from `nono.toml`'s `[build] styles`), and inline `stylesheet {}`
+/// CSS. Links come before the inline block, so a page's own `stylesheet {}` can
+/// override the linked theme.
+pub fn document(title: &str, styles: &[String], css: &str, body: &str) -> String {
     let mut out = String::from("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n");
     out.push_str("<meta charset=\"utf-8\" />\n");
     out.push_str("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n");
     out.push_str("<title>");
     escape_into(title, &mut out);
     out.push_str("</title>\n");
+    for href in styles {
+        out.push_str("<link rel=\"stylesheet\" href=\"");
+        escape_attr_into(href, &mut out);
+        out.push_str("\" />\n");
+    }
     if !css.is_empty() {
         out.push_str("<style>\n");
         out.push_str(css);

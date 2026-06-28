@@ -185,6 +185,30 @@ The Last.fm source reads its API key from `NONO_LASTFM_KEY`. If it's unset or
 the call fails, the source errors; pair it with `or =` on the slot, or a weekly
 rebuild cadence, so a flaky API never takes down the build.
 
+## Build stage and theming
+
+A project may carry a `nono.toml`. It is optional; without one you get the
+defaults. The point of it is the `[build]` section, an asset pipeline that runs
+before the site compiles:
+
+```toml
+[build]
+# Linked from every page's <head>, served out of static/.
+styles = ["/styles.css"]
+# Shell commands run, in order, before each build (including every `nono dev`
+# reload). This is where Tailwind, esbuild, a sass compile, etc. go.
+steps = ["npx @tailwindcss/cli -i assets/app.css -o static/styles.css --minify"]
+```
+
+`steps` run from the project root on every build, so an edit-and-refresh in
+`nono dev` re-runs them; keep them quick and do `npm install` by hand once. nono
+still ships nothing dynamic to the browser, the build stage just decides which
+static CSS/JS ends up in `static/` and linked in the head.
+
+The `nono new` template comes themed: a hand-written `static/styles.css` linked
+via `styles`, so the blog looks like a blog with zero setup. The `nono.toml`
+shows the one-line Tailwind step commented out, if you'd rather generate it.
+
 ## Deploying
 
 `nono build` emits a folder of static HTML, with vanity directories

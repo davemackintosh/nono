@@ -1,0 +1,20 @@
+# Project configuration. Everything here is optional; delete the file and the
+# site still builds, just without the asset pipeline below.
+
+[build]
+# Stylesheets linked from every page's <head>, served out of static/. The
+# template ships a hand-written static/styles.css so the blog is styled with
+# zero setup.
+styles = ["/styles.css"]
+
+# Commands run, in order, before every build (including each `nono dev` reload).
+# This is the build stage: use it for Tailwind, esbuild, a sass compile, whatever
+# produces the CSS/JS you link above. Keep them quick; do `npm install` by hand.
+#
+# To theme with Tailwind instead of the hand-written CSS:
+#   1. npm install tailwindcss @tailwindcss/cli
+#   2. put your directives in assets/app.css
+#   3. uncomment the step below (it overwrites static/styles.css on each build)
+#
+# steps = ["npx @tailwindcss/cli -i assets/app.css -o static/styles.css --minify"]
+steps = []

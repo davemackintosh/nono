@@ -39,6 +39,11 @@ const TEMPLATE: &[(&str, &str)] = &[
         "content/posts/draft-thing.md",
         include_str!("../examples/blog/content/posts/draft-thing.md"),
     ),
+    ("nono.toml", include_str!("../examples/blog/nono.toml")),
+    (
+        "static/styles.css",
+        include_str!("../examples/blog/static/styles.css"),
+    ),
     (
         ".github/workflows/deploy.yml",
         include_str!("../examples/blog/.github/workflows/deploy.yml"),
