@@ -8,6 +8,7 @@
 // `headings` comes free with every markdown page; TableOfContents is a standard
 // library component (see src/std.nono) that turns it into a nav of anchor links.
 component PostLayout(title: string, date: string, headings: list) {
+  SiteHead()
   Post(title = title, date = date) {
     TableOfContents(headings = headings)
     Slot()

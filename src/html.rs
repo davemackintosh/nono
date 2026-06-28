@@ -18,6 +18,12 @@ pub enum Html {
         attrs: Vec<(String, String)>,
         children: Vec<Html>,
     },
+    /// Content that belongs to a named document region (`head`, later `footer`,
+    /// ...) rather than where it sits in the tree. Any component can emit one
+    /// from anywhere; `extract_hoists` gathers them, in document order, before
+    /// serialisation, so they never reach the body. This is what lets nested
+    /// components each contribute to the `<head>`.
+    Hoist { region: String, children: Vec<Html> },
 }
 
 /// HTML void elements that must not have a closing tag.
@@ -99,6 +105,52 @@ pub fn known_html_tags() -> BTreeSet<&'static str> {
     .collect()
 }
 
+/// Pull every `Html::Hoist` out of the tree, wherever it sits and however deeply
+/// nested, grouping the contents by region name in document order. Returns the
+/// collected regions and the body with the hoist markers removed. A region's
+/// content is itself hoist-free (nested hoists are flattened up).
+pub fn extract_hoists(
+    nodes: Vec<Html>,
+) -> (std::collections::BTreeMap<String, Vec<Html>>, Vec<Html>) {
+    let mut regions: std::collections::BTreeMap<String, Vec<Html>> =
+        std::collections::BTreeMap::new();
+    let mut body = Vec::new();
+    collect_hoists(nodes, &mut regions, &mut body);
+    (regions, body)
+}
+
+fn collect_hoists(
+    nodes: Vec<Html>,
+    regions: &mut std::collections::BTreeMap<String, Vec<Html>>,
+    body: &mut Vec<Html>,
+) {
+    for node in nodes {
+        match node {
+            Html::Hoist { region, children } => {
+                // The region's content may itself contain hoists (a head block
+                // wrapping a component that hoists); flatten those up too.
+                let mut inner_body = Vec::new();
+                collect_hoists(children, regions, &mut inner_body);
+                regions.entry(region).or_default().extend(inner_body);
+            }
+            Html::Element {
+                tag,
+                attrs,
+                children,
+            } => {
+                let mut inner_body = Vec::new();
+                collect_hoists(children, regions, &mut inner_body);
+                body.push(Html::Element {
+                    tag,
+                    attrs,
+                    children: inner_body,
+                });
+            }
+            other => body.push(other),
+        }
+    }
+}
+
 pub fn render(nodes: &[Html]) -> String {
     let mut out = String::new();
     for n in nodes {
@@ -111,6 +163,9 @@ fn render_node(node: &Html, out: &mut String) {
     match node {
         Html::Text(t) => escape_into(t, out),
         Html::Raw(r) => out.push_str(r),
+        // A hoist that survived to serialisation has no home (no extract pass, or
+        // an unknown region): drop it rather than dumping head content in the body.
+        Html::Hoist { .. } => {}
         Html::Element {
             tag,
             attrs,
@@ -163,21 +218,20 @@ fn escape_attr_into(s: &str, out: &mut String) {
     }
 }
 
-/// Wrap body HTML in a complete document with the given title, linked external
-/// stylesheets (from `nono.toml`'s `[build] styles`), and inline `stylesheet {}`
-/// CSS. Links come before the inline block, so a page's own `stylesheet {}` can
-/// override the linked theme.
-pub fn document(title: &str, styles: &[String], css: &str, body: &str) -> String {
+/// Wrap body HTML in a complete document. `head_extra` is pre-rendered HTML
+/// collected from `head { }` blocks across the component tree (links, meta, and
+/// so on); it lands in the document head before the inline `stylesheet {}` CSS,
+/// so a page's own `stylesheet {}` still has the last word.
+pub fn document(title: &str, head_extra: &str, css: &str, body: &str) -> String {
     let mut out = String::from("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n");
     out.push_str("<meta charset=\"utf-8\" />\n");
     out.push_str("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n");
     out.push_str("<title>");
     escape_into(title, &mut out);
     out.push_str("</title>\n");
-    for href in styles {
-        out.push_str("<link rel=\"stylesheet\" href=\"");
-        escape_attr_into(href, &mut out);
-        out.push_str("\" />\n");
+    if !head_extra.is_empty() {
+        out.push_str(head_extra);
+        out.push('\n');
     }
     if !css.is_empty() {
         out.push_str("<style>\n");

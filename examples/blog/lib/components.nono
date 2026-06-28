@@ -40,3 +40,13 @@ component Layout(heading: string) {
   }
   aside { Slot(named = "sidebar", or = nil) }
 }
+
+// Document head, shared across every page. A `head { }` block is lifted into the
+// document <head> from wherever it renders, so each page just drops a SiteHead()
+// in and the stylesheet link lands in the right place. This is also how you link
+// whatever your build step produces; nono itself injects nothing.
+component SiteHead {
+  head {
+    link(rel = "stylesheet", href = "/styles.css")
+  }
+}

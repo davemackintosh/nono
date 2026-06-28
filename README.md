@@ -188,25 +188,38 @@ rebuild cadence, so a flaky API never takes down the build.
 ## Build stage and theming
 
 A project may carry a `nono.toml`. It is optional; without one you get the
-defaults. The point of it is the `[build]` section, an asset pipeline that runs
-before the site compiles:
+defaults. The point of it is the `[build]` section: shell commands that run
+before the site compiles, for an asset pipeline (Tailwind, esbuild, a sass
+compile, whatever produces the CSS/JS your pages link).
 
 ```toml
 [build]
-# Linked from every page's <head>, served out of static/.
-styles = ["/styles.css"]
-# Shell commands run, in order, before each build (including every `nono dev`
-# reload). This is where Tailwind, esbuild, a sass compile, etc. go.
-steps = ["npx @tailwindcss/cli -i assets/app.css -o static/styles.css --minify"]
+# Run in order before each build (including every `nono dev` reload). Two path
+# tokens are substituted first: <rootDir> (project root) and <publicDir> (the
+# static/ directory, whose contents become the site root).
+steps = ["npx @tailwindcss/cli -i assets/app.css -o <publicDir>/styles.css --minify"]
 ```
 
 `steps` run from the project root on every build, so an edit-and-refresh in
 `nono dev` re-runs them; keep them quick and do `npm install` by hand once. nono
-still ships nothing dynamic to the browser, the build stage just decides which
-static CSS/JS ends up in `static/` and linked in the head.
+ships nothing dynamic to the browser and **injects no styles for you**, the build
+stage just decides which static CSS/JS ends up in `static/`. It is just tools.
 
-The `nono new` template comes themed: a hand-written `static/styles.css` linked
-via `styles`, so the blog looks like a blog with zero setup. The `nono.toml`
+You link what it produces yourself, with a `head { }` block:
+
+```nono
+component SiteHead {
+  head {
+    link(rel = "stylesheet", href = "/styles.css")
+  }
+}
+```
+
+A `head { }` block is lifted into the document `<head>` from wherever it renders,
+and blocks from across the component tree are combined, so any component at any
+depth can contribute to the head. (footer and other regions will join it the same
+way.) The `nono new` template ships a hand-written `static/styles.css` and a
+`SiteHead` that links it, so the blog is styled with zero setup; the `nono.toml`
 shows the one-line Tailwind step commented out, if you'd rather generate it.
 
 ## Deploying

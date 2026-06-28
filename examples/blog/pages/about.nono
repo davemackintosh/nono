@@ -1,6 +1,7 @@
 // A flat page. Routes to about/index.html (vanity URL).
 
 component AboutPage {
+  SiteHead()
   Layout(heading = "About") {
     Prose { "I asked two friends for advice on stable frameworks." }
     Prose { "They bet I would build my own. No, no, I will do it myself." }

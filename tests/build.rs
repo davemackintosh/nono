@@ -247,7 +247,7 @@ fn markdown_headings_drive_a_table_of_contents() {
 }
 
 #[test]
-fn build_step_runs_and_its_output_is_linked() {
+fn build_step_runs_with_path_tokens() {
     let root = scratch("build_steps");
     let proj = root.join("project");
     let out = root.join("out");
@@ -256,13 +256,42 @@ fn build_step_runs_and_its_output_is_linked() {
         "pages/index.nono",
         r#"component Home { main { "hi" } }"#,
     );
-    // The step writes a stylesheet into static/, which then gets copied out and
-    // linked from the head. This proves steps run before the static copy and
-    // that [build] styles lands in the document.
+    // The step writes a stylesheet via the <publicDir> token (which resolves to
+    // static/), proving steps run before the static copy and that the token is
+    // substituted. nono links nothing itself, so we only check the file lands.
     write(
         &proj,
         "nono.toml",
-        "[build]\nstyles = [\"/generated.css\"]\nsteps = [\"mkdir -p static && printf 'body{color:red}' > static/generated.css\"]\n",
+        "[build]\nsteps = [\"mkdir -p <publicDir> && printf 'body{color:red}' > <publicDir>/generated.css\"]\n",
+    );
+
+    build(&BuildConfig {
+        project: proj,
+        out: out.clone(),
+    })
+    .expect("build failed");
+
+    let css = fs::read_to_string(out.join("generated.css")).expect("generated css missing");
+    assert!(css.contains("color:red"), "got: {css}");
+}
+
+#[test]
+fn head_block_is_lifted_into_the_document_head() {
+    let root = scratch("head_block");
+    let proj = root.join("project");
+    let out = root.join("out");
+    // SiteHead emits a head{} block; the page uses it twice over, yet the link
+    // must appear once and inside <head>, not the body. Proves hoists combine
+    // across the component tree and land in the head.
+    write(
+        &proj,
+        "lib/lib.nono",
+        r#"component SiteHead { head { link(rel = "stylesheet", href = "/styles.css") } }"#,
+    );
+    write(
+        &proj,
+        "pages/index.nono",
+        r#"component Home { SiteHead() main { "body text" SiteHead() } }"#,
     );
 
     build(&BuildConfig {
@@ -272,12 +301,18 @@ fn build_step_runs_and_its_output_is_linked() {
     .expect("build failed");
 
     let page = fs::read_to_string(out.join("index.html")).expect("index missing");
+    let head_end = page.find("</head>").expect("no </head>");
+    let body_start = page.find("<body>").expect("no <body>");
+    let link = r#"<link rel="stylesheet" href="/styles.css" />"#;
+    // The link sits in the head, before the body opens.
+    let first = page.find(link).expect("link missing from document");
+    assert!(first < head_end, "link should be in <head>: {page}");
+    // Body carries the real content but no leaked link.
+    assert!(page[body_start..].contains("body text"), "got: {page}");
     assert!(
-        page.contains(r#"<link rel="stylesheet" href="/generated.css" />"#),
-        "got: {page}"
+        !page[body_start..].contains(link),
+        "link leaked into body: {page}"
     );
-    let css = fs::read_to_string(out.join("generated.css")).expect("generated css missing");
-    assert!(css.contains("color:red"), "got: {css}");
 }
 
 #[test]

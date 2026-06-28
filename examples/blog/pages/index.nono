@@ -15,6 +15,7 @@
 const posts = glob("content/posts/*.md")
 
 component IndexPage {
+  SiteHead()
   Layout(heading = "New World Code") {
     sidebar = {
       Heading(2) { "Listening to" }

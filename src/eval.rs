@@ -289,8 +289,21 @@ impl Evaluator {
             return self.expand_component(comp, el, env, fills);
         }
 
-        // Otherwise treat as a raw HTML element if known.
+        // `head { ... }` is not an element in the body: it's a hoist region. Its
+        // children render here but get lifted into the document <head> by
+        // `extract_hoists` before serialisation, so any component, at any depth,
+        // can contribute to the head. (footer and friends will join it the same
+        // way once they have a placeholder to land in.)
         let lname = el.name.to_lowercase();
+        if lname == "head" {
+            let children = self.eval_nodes(&el.children, env, fills)?;
+            return Ok(vec![Html::Hoist {
+                region: "head".to_string(),
+                children,
+            }]);
+        }
+
+        // Otherwise treat as a raw HTML element if known.
         if !self.html_tags.contains(lname.as_str()) {
             bail!(
                 "unknown element or component `{}` (not a defined component, not a known HTML tag)",

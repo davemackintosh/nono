@@ -23,10 +23,11 @@ pub struct BuildSection {
     /// Shell commands run, in order, from the project root before the site is
     /// compiled. They run on every build, including each `nono dev` reload, so
     /// keep them quick (compile assets here; do `npm install` once by hand).
+    ///
+    /// Two path tokens are substituted before a command runs, so you needn't
+    /// hardcode absolute paths: `<rootDir>` is the project root and `<publicDir>`
+    /// is its `static/` directory (whose contents become the site root).
     pub steps: Vec<String>,
-    /// Stylesheet URLs linked from every page's `<head>`, in order. These are
-    /// paths in the built site (served out of `static/`), e.g. `/styles.css`.
-    pub styles: Vec<String>,
 }
 
 impl Config {

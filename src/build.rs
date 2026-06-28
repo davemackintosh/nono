@@ -119,10 +119,12 @@ pub fn build(cfg: &BuildConfig) -> Result<BuildStats> {
         let nodes = ev
             .render_component(&page_component)
             .with_context(|| format!("rendering {}", p.display()))?;
-        let body = html::render(&nodes);
+        let (regions, body_nodes) = html::extract_hoists(nodes);
+        let head_extra = html::render(regions.get("head").map(Vec::as_slice).unwrap_or(&[]));
+        let body = html::render(&body_nodes);
 
         let title = derive_title(&page_component, rel);
-        let doc = html::document(&title, &config.build.styles, &page_css, &body);
+        let doc = html::document(&title, &head_extra, &page_css, &body);
 
         let out_path = route_to_output(&cfg.out, rel);
         if let Some(parent) = out_path.parent() {
@@ -210,7 +212,9 @@ pub fn build(cfg: &BuildConfig) -> Result<BuildStats> {
             let nodes = ev
                 .render_layout(&layout_component, fm, body_html)
                 .with_context(|| format!("rendering {}", p.display()))?;
-            let body = html::render(&nodes);
+            let (regions, body_nodes) = html::extract_hoists(nodes);
+            let head_extra = html::render(regions.get("head").map(Vec::as_slice).unwrap_or(&[]));
+            let body = html::render(&body_nodes);
 
             // A content page's title comes from frontmatter, falling back to the
             // layout component name (better than the .nono page stub).
@@ -218,7 +222,7 @@ pub fn build(cfg: &BuildConfig) -> Result<BuildStats> {
                 Some(Value::Str(s)) => s.clone(),
                 _ => layout_component.clone(),
             };
-            let doc = html::document(&title, &config.build.styles, &page_css, &body);
+            let doc = html::document(&title, &head_extra, &page_css, &body);
 
             let out_path = route_to_output(&cfg.out, rel);
             if let Some(parent) = out_path.parent() {
@@ -254,11 +258,22 @@ pub fn build(cfg: &BuildConfig) -> Result<BuildStats> {
 /// Run the configured asset build steps in order, from the project root. Each is
 /// handed to `sh -c`, with stdout/stderr inherited so Tailwind and friends report
 /// as usual. A non-zero exit aborts the build, naming the step that failed.
+///
+/// Before a step runs, two path tokens are substituted so commands needn't carry
+/// absolute paths: `<rootDir>` (the project root) and `<publicDir>` (its static/
+/// directory, whose contents become the site root).
 fn run_build_steps(project: &Path, steps: &[String]) -> Result<()> {
+    let root = std::fs::canonicalize(project).unwrap_or_else(|_| project.to_path_buf());
+    let root_token = root.to_string_lossy().to_string();
+    let public_token = root.join("static").to_string_lossy().to_string();
+
     for step in steps {
+        let resolved = step
+            .replace("<rootDir>", &root_token)
+            .replace("<publicDir>", &public_token);
         let status = std::process::Command::new("sh")
             .arg("-c")
-            .arg(step)
+            .arg(&resolved)
             .current_dir(project)
             .status()
             .with_context(|| format!("running build step `{}`", step))?;
