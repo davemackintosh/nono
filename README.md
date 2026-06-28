@@ -192,11 +192,17 @@ rebuild cadence, so a flaky API never takes down the build.
 at the output and you're done.
 
 A site made with `nono new` ships a `.github/workflows/deploy.yml` for Vercel.
-The build runs in GitHub Actions, not on Vercel: Actions installs nono, builds
-the site, wraps the output in Vercel's Build Output API, and deploys it
-prebuilt, so Vercel never touches Rust and only ever serves finished HTML. Set
-three repository secrets (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`,
-the last two from a local `vercel link`) and a push to `main` ships it.
+The build runs in GitHub Actions, not on Vercel: Actions downloads the prebuilt
+nono binary from the latest release, builds the site, wraps the output in
+Vercel's Build Output API, and deploys it prebuilt, so Vercel never touches Rust
+and only ever serves finished HTML. Set three repository secrets (`VERCEL_TOKEN`,
+`VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`, the last two from a local `vercel link`)
+and a push to `main` ships it.
+
+Releases come from tagging: `git tag v0.1.0 && git push --tags` builds the Linux
+and macOS binaries and attaches them to a GitHub Release (see
+`.github/workflows/release.yml`). The deploy workflow pulls the Linux one, so you
+need at least one tagged release before a scaffolded site will deploy.
 
 ## Editor support
 

@@ -1,0 +1,41 @@
+name: Release
+
+# Tag a version (`git tag v0.1.0 && git push --tags`) and this builds nono for
+# Linux and macOS and attaches the binaries to a GitHub Release. The scaffolded
+# deploy workflow downloads the Linux one, so deploys don't pay a Rust compile.
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: macos-latest
+            target: aarch64-apple-darwin
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build
+        run: cargo build --release --locked
+
+      - name: Stage the binary
+        # One asset per target, named so the deploy workflow can fetch the Linux
+        # one from `releases/latest/download/nono-x86_64-unknown-linux-gnu`.
+        run: cp target/release/nono "nono-${{ matrix.target }}"
+
+      - name: Publish to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: nono-${{ matrix.target }}
+          generate_release_notes: true

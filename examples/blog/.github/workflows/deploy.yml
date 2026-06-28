@@ -23,11 +23,15 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      # ubuntu-latest ships a Rust toolchain, so we just install the nono binary
-      # from source. Pin a tag or commit here once nono cuts releases; building
-      # from main means you get whatever the compiler does today.
+      # Grab the prebuilt Linux binary from nono's latest release: no Rust
+      # toolchain, no compile, just download and run. To pin a version, swap
+      # `latest/download` for `download/v0.1.0` (or whichever tag you trust).
       - name: Install nono
-        run: cargo install --git https://github.com/davemackintosh/nono nono
+        run: |
+          curl -fsSL \
+            https://github.com/davemackintosh/nono/releases/latest/download/nono-x86_64-unknown-linux-gnu \
+            -o /usr/local/bin/nono
+          chmod +x /usr/local/bin/nono
 
       - name: Build the site
         run: nono build . --out out
